@@ -4,6 +4,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/stores";
+import { createMockSelfSubmission } from "@/lib/mock/self-submissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,47 +13,66 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AlertTriangle, Check, Send, Lock } from "lucide-react";
-import type { Activity } from "@/types";
+import { AlertTriangle, Check, Send } from "lucide-react";
+import type { Activity, SubmissionMethod } from "@/types";
 
 interface SelfSubmissionFormProps {
   activity: Activity;
   essayId?: string;
-  onSubmit?: (data: {
-    submissionEmail: string;
-    submissionMethod: string;
-    userNote: string;
-    riskConfirmed: boolean;
-  }) => void;
+  onSuccess?: () => void;
 }
 
-export function SelfSubmissionForm({ activity, essayId, onSubmit }: SelfSubmissionFormProps) {
+export function SelfSubmissionForm({ activity, essayId, onSuccess }: SelfSubmissionFormProps) {
   const router = useRouter();
+  const { currentIdentity } = useAuthStore();
   const [submissionEmail, setSubmissionEmail] = useState("");
-  const [submissionMethod, setSubmissionMethod] = useState(activity.submissionMethod || "email");
+  const [submissionMethod, setSubmissionMethod] = useState<SubmissionMethod>(activity.submissionMethod || "email");
   const [userNote, setUserNote] = useState("");
   const [riskConfirmed, setRiskConfirmed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!riskConfirmed) return;
+
+    if (!currentIdentity) {
+      setError("请先登录");
+      return;
+    }
+
+    if (!riskConfirmed) {
+      setError("请确认一稿多投提示");
+      return;
+    }
 
     setIsSubmitting(true);
-    // 模拟提交
-    setTimeout(() => {
-      setSubmitted(true);
-      setIsSubmitting(false);
-      if (onSubmit) {
-        onSubmit({
+    setError(null);
+
+    try {
+      // 调用 mock 创建投稿记录
+      createMockSelfSubmission(
+        {
+          essayId: essayId || "",
+          activityId: activity.id,
           submissionEmail,
           submissionMethod,
           userNote,
-          riskConfirmed,
-        });
+        },
+        currentIdentity.id
+      );
+
+      setSubmitted(true);
+      setIsSubmitting(false);
+
+      // 触发成功回调
+      if (onSuccess) {
+        onSuccess();
       }
-    }, 1000);
+    } catch (err) {
+      setError("提交失败，请重试");
+      setIsSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -90,6 +111,13 @@ export function SelfSubmissionForm({ activity, essayId, onSubmit }: SelfSubmissi
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* 错误提示 */}
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+
           {/* 活动信息 */}
           <div className="p-4 bg-gray-50 rounded-lg">
             <div className="text-sm text-gray-500 mb-1">当前活动</div>
@@ -117,7 +145,10 @@ export function SelfSubmissionForm({ activity, essayId, onSubmit }: SelfSubmissi
           {/* 投稿方式 */}
           <div>
             <Label>投稿方式</Label>
-            <Select value={submissionMethod} onValueChange={setSubmissionMethod}>
+            <Select
+              value={submissionMethod}
+              onValueChange={(value) => setSubmissionMethod(value as SubmissionMethod)}
+            >
               <SelectTrigger className="mt-2">
                 <SelectValue />
               </SelectTrigger>

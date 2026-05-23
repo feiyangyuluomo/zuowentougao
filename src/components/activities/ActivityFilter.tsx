@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { GRADE_OPTIONS, GRADE_GROUPS } from "@/constants";
+import { GRADE_OPTIONS } from "@/constants";
 import { Filter, X, Search } from "lucide-react";
 
 interface ActivityFilterProps {
@@ -23,6 +23,12 @@ interface ActivityFilterProps {
     gradeScope?: string[];
     genre?: string[];
     activityStatus?: string;
+    hasPayment?: boolean;
+    hasCertificate?: boolean;
+    hasSampleIssue?: boolean;
+    hasBonus?: boolean;
+    hasTeacherGuide?: boolean;
+    hasOrgAward?: boolean;
   }) => void;
 }
 
@@ -42,20 +48,40 @@ const STATUS_OPTIONS = [
   { label: "已截止", value: "closed" },
 ];
 
+const BENEFIT_OPTIONS = [
+  { label: "有稿费", value: "hasPayment" },
+  { label: "有样刊", value: "hasSampleIssue" },
+  { label: "有证书", value: "hasCertificate" },
+  { label: "有奖金", value: "hasBonus" },
+  { label: "有教师指导奖", value: "hasTeacherGuide" },
+  { label: "有机构组织奖", value: "hasOrgAward" },
+];
+
 export function ActivityFilter({ onFilterChange }: ActivityFilterProps) {
   const [keyword, setKeyword] = useState("");
   const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedBenefits, setSelectedBenefits] = useState<string[]>([]);
 
-  const handleKeywordChange = (value: string) => {
-    setKeyword(value);
+  const updateFilters = () => {
     onFilterChange({
-      keyword: value || undefined,
+      keyword: keyword || undefined,
       gradeScope: selectedGrades.length > 0 ? selectedGrades : undefined,
       genre: selectedGenres.length > 0 ? selectedGenres : undefined,
       activityStatus: selectedStatuses.length > 0 ? selectedStatuses[0] : undefined,
+      hasPayment: selectedBenefits.includes("hasPayment") || undefined,
+      hasCertificate: selectedBenefits.includes("hasCertificate") || undefined,
+      hasSampleIssue: selectedBenefits.includes("hasSampleIssue") || undefined,
+      hasBonus: selectedBenefits.includes("hasBonus") || undefined,
+      hasTeacherGuide: selectedBenefits.includes("hasTeacherGuide") || undefined,
+      hasOrgAward: selectedBenefits.includes("hasOrgAward") || undefined,
     });
+  };
+
+  const handleKeywordChange = (value: string) => {
+    setKeyword(value);
+    updateFilters();
   };
 
   const handleGradeChange = (grade: string, checked: boolean) => {
@@ -63,12 +89,7 @@ export function ActivityFilter({ onFilterChange }: ActivityFilterProps) {
       ? [...selectedGrades, grade]
       : selectedGrades.filter((g) => g !== grade);
     setSelectedGrades(newGrades);
-    onFilterChange({
-      keyword: keyword || undefined,
-      gradeScope: newGrades.length > 0 ? newGrades : undefined,
-      genre: selectedGenres.length > 0 ? selectedGenres : undefined,
-      activityStatus: selectedStatuses.length > 0 ? selectedStatuses[0] : undefined,
-    });
+    updateFilters();
   };
 
   const handleGenreChange = (genre: string, checked: boolean) => {
@@ -76,12 +97,7 @@ export function ActivityFilter({ onFilterChange }: ActivityFilterProps) {
       ? [...selectedGenres, genre]
       : selectedGenres.filter((g) => g !== genre);
     setSelectedGenres(newGenres);
-    onFilterChange({
-      keyword: keyword || undefined,
-      gradeScope: selectedGrades.length > 0 ? selectedGrades : undefined,
-      genre: newGenres.length > 0 ? newGenres : undefined,
-      activityStatus: selectedStatuses.length > 0 ? selectedStatuses[0] : undefined,
-    });
+    updateFilters();
   };
 
   const handleStatusChange = (status: string, checked: boolean) => {
@@ -89,12 +105,15 @@ export function ActivityFilter({ onFilterChange }: ActivityFilterProps) {
       ? [...selectedStatuses, status]
       : selectedStatuses.filter((s) => s !== status);
     setSelectedStatuses(newStatuses);
-    onFilterChange({
-      keyword: keyword || undefined,
-      gradeScope: selectedGrades.length > 0 ? selectedGrades : undefined,
-      genre: selectedGenres.length > 0 ? selectedGenres : undefined,
-      activityStatus: newStatuses.length > 0 ? newStatuses[0] : undefined,
-    });
+    updateFilters();
+  };
+
+  const handleBenefitChange = (benefit: string, checked: boolean) => {
+    const newBenefits = checked
+      ? [...selectedBenefits, benefit]
+      : selectedBenefits.filter((b) => b !== benefit);
+    setSelectedBenefits(newBenefits);
+    updateFilters();
   };
 
   const clearAllFilters = () => {
@@ -102,10 +121,16 @@ export function ActivityFilter({ onFilterChange }: ActivityFilterProps) {
     setSelectedGrades([]);
     setSelectedGenres([]);
     setSelectedStatuses([]);
+    setSelectedBenefits([]);
     onFilterChange({});
   };
 
-  const hasActiveFilters = keyword || selectedGrades.length > 0 || selectedGenres.length > 0 || selectedStatuses.length > 0;
+  const hasActiveFilters =
+    keyword ||
+    selectedGrades.length > 0 ||
+    selectedGenres.length > 0 ||
+    selectedStatuses.length > 0 ||
+    selectedBenefits.length > 0;
 
   return (
     <div className="space-y-4">
@@ -206,6 +231,34 @@ export function ActivityFilter({ onFilterChange }: ActivityFilterProps) {
           </DropdownMenuContent>
         </DropdownMenu>
 
+        {/* Benefit Filter */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-9">
+              <Filter className="h-4 w-4 mr-1" />
+              权益
+              {selectedBenefits.length > 0 && (
+                <Badge variant="default" className="ml-2 h-5 w-5 p-0 justify-center">
+                  {selectedBenefits.length}
+                </Badge>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-56">
+            <DropdownMenuLabel>选择权益</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {BENEFIT_OPTIONS.map((benefit) => (
+              <DropdownMenuCheckboxItem
+                key={benefit.value}
+                checked={selectedBenefits.includes(benefit.value)}
+                onCheckedChange={(checked) => handleBenefitChange(benefit.value, checked)}
+              >
+                {benefit.label}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         {/* Clear Filters */}
         {hasActiveFilters && (
           <Button
@@ -255,6 +308,18 @@ export function ActivityFilter({ onFilterChange }: ActivityFilterProps) {
                 <X
                   className="h-3 w-3 cursor-pointer"
                   onClick={() => handleStatusChange(status, false)}
+                />
+              </Badge>
+            );
+          })}
+          {selectedBenefits.map((benefit) => {
+            const benefitLabel = BENEFIT_OPTIONS.find((b) => b.value === benefit)?.label || benefit;
+            return (
+              <Badge key={benefit} variant="secondary" className="gap-1">
+                {benefitLabel}
+                <X
+                  className="h-3 w-3 cursor-pointer"
+                  onClick={() => handleBenefitChange(benefit, false)}
                 />
               </Badge>
             );

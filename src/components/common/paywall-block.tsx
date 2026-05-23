@@ -9,6 +9,11 @@ interface PaywallBlockProps {
   description?: string;
   price?: string;
   features?: string[];
+  action?: {
+    label: string;
+    href?: string;
+    onClick?: () => void;
+  };
   className?: string;
   onUnlock?: () => void;
 }
@@ -25,6 +30,7 @@ export function PaywallBlock({
     "记录自主投稿",
     "申请平台代投服务",
   ],
+  action,
   className,
   onUnlock,
 }: PaywallBlockProps) {
@@ -62,9 +68,9 @@ export function PaywallBlock({
       <Button
         size="lg"
         className="bg-primary hover:bg-primary/90"
-        onClick={onUnlock}
+        onClick={action?.onClick}
       >
-        立即开通会员
+        {action?.label || "立即开通会员"}
       </Button>
 
       <p className="text-xs text-gray-400 mt-4">

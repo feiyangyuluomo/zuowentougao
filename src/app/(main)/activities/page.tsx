@@ -14,6 +14,12 @@ export default function ActivitiesPage() {
     gradeScope?: string[];
     genre?: string[];
     activityStatus?: string;
+    hasPayment?: boolean;
+    hasCertificate?: boolean;
+    hasSampleIssue?: boolean;
+    hasBonus?: boolean;
+    hasTeacherGuide?: boolean;
+    hasOrgAward?: boolean;
   }>({});
 
   const filteredActivities = filterMockActivities(filters);

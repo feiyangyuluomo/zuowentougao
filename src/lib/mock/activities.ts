@@ -19,7 +19,7 @@ export const MOCK_ACTIVITIES: Activity[] = [
       createdAt: new Date("2024-01-01"),
       updatedAt: new Date("2024-01-01"),
     },
-    title: "2024年"童心向未来"主题作文征集",
+    title: "2024年\"童心向未来\"主题作文征集",
     activityType: "主题征文",
     gradeScope: ["3", "4", "5", "6"],
     genre: ["narrative", "prose"],
@@ -35,15 +35,17 @@ export const MOCK_ACTIVITIES: Activity[] = [
     hasBonus: false,
     hasCertificate: true,
     hasSampleIssue: true,
+    hasTeacherGuide: true,
+    hasOrgAward: true,
     supportSelfSubmission: true,
     supportAgentSubmission: true,
     activityStatus: "recruiting",
     auditStatus: "approved",
     sourceUrl: "https://www.shaoerwenyi.com",
     originalDetail:
-      "一、征文主题：童心向未来\n二、征集对象：3-6年级小学生\n三、内容要求：围绕"成长"和"梦想"主题，内容真实感人，体现少年儿童的纯真心灵...\n四、字数要求：小学3-4年级不少于400字，5-6年级不少于600字",
+      "一、征文主题：童心向未来\n二、征集对象：3-6年级小学生\n三、内容要求：围绕\"成长\"和\"梦想\"主题，内容真实感人，体现少年儿童的纯真心灵...\n四、字数要求：小学3-4年级不少于400字，5-6年级不少于600字",
     publicSummary:
-      "《少年文艺》杂志社主办的年度主题作文征集活动，围绕"成长"和"梦想"主题，适合3-6年级学生参与。",
+      "《少年文艺》杂志社主办的年度主题作文征集活动，围绕\"成长\"和\"梦想\"主题，适合3-6年级学生参与。",
     paidDetail:
       "获奖作品将在《少年文艺》 Magazine 发表，优稿优酬。\n投稿邮箱：tongxincjb@163.com",
     coverImage: "/images/activities/act-001-cover.jpg",
@@ -64,7 +66,7 @@ export const MOCK_ACTIVITIES: Activity[] = [
       createdAt: new Date("2024-01-01"),
       updatedAt: new Date("2024-01-01"),
     },
-    title: "第十届"春之声"作文大赛",
+    title: "第十届\"春之声\"作文大赛",
     activityType: "作文大赛",
     gradeScope: ["1", "2", "3", "4", "5", "6"],
     genre: ["narrative", "speech"],
@@ -80,15 +82,17 @@ export const MOCK_ACTIVITIES: Activity[] = [
     hasBonus: true,
     hasCertificate: true,
     hasSampleIssue: false,
+    hasTeacherGuide: false,
+    hasOrgAward: true,
     supportSelfSubmission: true,
     supportAgentSubmission: true,
     activityStatus: "closing_soon",
     auditStatus: "approved",
     sourceUrl: "https://www.pinyinbao.com",
     originalDetail:
-      "一、大赛主题："春之声"\n二、围绕春天、自然、环保主题写作\n三、分低年级组（1-3年级）和高年级组（4-6年级）\n四、低年级组字数不限，高年级组不少于500字",
+      "一、大赛主题：\"春之声\"\n二、围绕春天、自然、环保主题写作\n三、分低年级组（1-3年级）和高年级组（4-6年级）\n四、低年级组字数不限，高年级组不少于500字",
     publicSummary:
-      "小学生拼音报社主办的年度作文大赛，围绕"春天"主题，分低年级和高年级组，获奖者获得奖金和证书。",
+      "小学生拼音报社主办的年度作文大赛，围绕\"春天\"主题，分低年级和高年级组，获奖者获得奖金和证书。",
     paidDetail: "一等奖500元，二等奖300元，三等奖100元，颁发荣誉证书。",
     coverImage: "/images/activities/act-002-cover.jpg",
     views: 8920,
@@ -108,7 +112,7 @@ export const MOCK_ACTIVITIES: Activity[] = [
       createdAt: new Date("2024-01-01"),
       updatedAt: new Date("2024-01-01"),
     },
-    title: "2024年度"创新杯"校园文学征集",
+    title: "2024年度\"创新杯\"校园文学征集",
     activityType: "文学征集",
     gradeScope: ["5", "6", "7", "8", "9"],
     genre: ["narrative", "argumentative", "prose"],
@@ -123,6 +127,8 @@ export const MOCK_ACTIVITIES: Activity[] = [
     hasBonus: true,
     hasCertificate: true,
     hasSampleIssue: true,
+    hasTeacherGuide: true,
+    hasOrgAward: true,
     supportSelfSubmission: true,
     supportAgentSubmission: true,
     activityStatus: "recruiting",
@@ -161,12 +167,14 @@ export const MOCK_ACTIVITIES: Activity[] = [
     submissionMethod: "email",
     submissionFormat: "邮件主题：姓名+年级+作文标题，正文粘贴正文",
     emailSubjectFormat: "{{姓名}}+{{年级}}+{{作文标题}}",
-    deadline: null,
+    deadline: undefined,
     isLongTerm: true,
     hasPayment: false,
     hasBonus: false,
     hasCertificate: false,
     hasSampleIssue: false,
+    hasTeacherGuide: false,
+    hasOrgAward: false,
     supportSelfSubmission: true,
     supportAgentSubmission: true,
     activityStatus: "long_term",
@@ -195,7 +203,7 @@ export const MOCK_ACTIVITIES: Activity[] = [
       createdAt: new Date("2024-01-01"),
       updatedAt: new Date("2024-01-01"),
     },
-    title: "2024"童话大王"想象力作文征集",
+    title: "2024\"童话大王\"想象力作文征集",
     activityType: "想象作文",
     gradeScope: ["1", "2", "3", "4"],
     genre: ["narrative", "prose"],
@@ -211,6 +219,8 @@ export const MOCK_ACTIVITIES: Activity[] = [
     hasBonus: false,
     hasCertificate: true,
     hasSampleIssue: true,
+    hasTeacherGuide: false,
+    hasOrgAward: true,
     supportSelfSubmission: true,
     supportAgentSubmission: true,
     activityStatus: "recruiting",
@@ -221,7 +231,7 @@ export const MOCK_ACTIVITIES: Activity[] = [
     publicSummary:
       "《童话大王》杂志想象力作文征集，鼓励低年级学生发挥想象力创作童话故事，获奖作品有机会发表。",
     paidDetail:
-      "入选作品在《童话大王》发表，优稿优酬，赠送样刊。\n优秀作者可成为"童话大王"小作家会员。",
+      "入选作品在《童话大王》发表，优稿优酬，赠送样刊。\n优秀作者可成为\"童话大王\"小作家会员。",
     coverImage: "/images/activities/act-005-cover.jpg",
     views: 6780,
     submissions: 1890,
@@ -240,7 +250,7 @@ export const MOCK_ACTIVITIES: Activity[] = [
       createdAt: new Date("2024-01-01"),
       updatedAt: new Date("2024-01-01"),
     },
-    title: "2024"青春印记"校园随笔征集",
+    title: "2024\"青春印记\"校园随笔征集",
     activityType: "校园随笔",
     gradeScope: ["7", "8", "9", "10", "11", "12"],
     genre: ["prose", "argumentative"],
@@ -255,6 +265,8 @@ export const MOCK_ACTIVITIES: Activity[] = [
     hasBonus: false,
     hasCertificate: true,
     hasSampleIssue: true,
+    hasTeacherGuide: true,
+    hasOrgAward: false,
     supportSelfSubmission: true,
     supportAgentSubmission: true,
     activityStatus: "recruiting",
@@ -284,7 +296,7 @@ export const MOCK_ACTIVITIES: Activity[] = [
       createdAt: new Date("2024-01-01"),
       updatedAt: new Date("2024-01-01"),
     },
-    title: "第二十届"少年作家杯"全国作文竞赛",
+    title: "第二十届\"少年作家杯\"全国作文竞赛",
     activityType: "作文竞赛",
     gradeScope: ["3", "4", "5", "6", "7", "8", "9"],
     genre: ["narrative", "argumentative", "prose"],
@@ -300,6 +312,8 @@ export const MOCK_ACTIVITIES: Activity[] = [
     hasBonus: true,
     hasCertificate: true,
     hasSampleIssue: true,
+    hasTeacherGuide: true,
+    hasOrgAward: true,
     supportSelfSubmission: true,
     supportAgentSubmission: true,
     activityStatus: "recruiting",
@@ -308,7 +322,7 @@ export const MOCK_ACTIVITIES: Activity[] = [
     originalDetail:
       "一、参赛对象：3-9年级学生\n二、分小学组、初中组进行\n三、主题：文化传承与创新\n四、评审团由知名作家、教育专家组成\n五、初赛投稿，决赛现场作文",
     publicSummary:
-      "第二十届"少年作家杯"全国作文竞赛，由《少年作家》杂志社主办，邀请全国中小学生参与。",
+      "第二十届\"少年作家杯\"全国作文竞赛，由《少年作家》杂志社主办，邀请全国中小学生参与。",
     paidDetail:
       "初赛免费，决赛评审费200元。\n特等奖5000元，一等奖2000元，二等奖800元，三等奖300元。\n获奖作品刊登在《少年作家》杂志。",
     coverImage: "/images/activities/act-007-cover.jpg",
@@ -329,7 +343,7 @@ export const MOCK_ACTIVITIES: Activity[] = [
       createdAt: new Date("2024-01-01"),
       updatedAt: new Date("2024-01-01"),
     },
-    title: "2024"我与自然"主题散文征集",
+    title: "2024\"我与自然\"主题散文征集",
     activityType: "散文征集",
     gradeScope: ["4", "5", "6", "7", "8"],
     genre: ["prose"],
@@ -344,15 +358,17 @@ export const MOCK_ACTIVITIES: Activity[] = [
     hasBonus: false,
     hasCertificate: true,
     hasSampleIssue: true,
+    hasTeacherGuide: true,
+    hasOrgAward: false,
     supportSelfSubmission: true,
     supportAgentSubmission: true,
     activityStatus: "recruiting",
     auditStatus: "approved",
     sourceUrl: "https://www.zuowenzhoukan.com",
     originalDetail:
-      "一、主题："我与自然"，描写自然风光、动植物、与自然的互动等\n二、文体：散文\n三、字数：小学4-6年级500-800字，初中组800-1200字\n四、作品需原创，展现真情实感",
+      "一、主题：\"我与自然\"，描写自然风光、动植物、与自然的互动等\n二、文体：散文\n三、字数：小学4-6年级500-800字，初中组800-1200字\n四、作品需原创，展现真情实感",
     publicSummary:
-      "《作文周刊》"我与自然"主题散文征集，邀请学生用散文形式记录与自然的故事。",
+      "《作文周刊》\"我与自然\"主题散文征集，邀请学生用散文形式记录与自然的故事。",
     paidDetail:
       "入选作品在《作文周刊》发表，优稿优酬。\n赠送全年《作文周刊》，颁发荣誉证书。",
     coverImage: "/images/activities/act-008-cover.jpg",
@@ -391,6 +407,12 @@ export function filterMockActivities(filters: {
   genre?: string[];
   activityStatus?: string;
   keyword?: string;
+  hasPayment?: boolean;
+  hasCertificate?: boolean;
+  hasSampleIssue?: boolean;
+  hasBonus?: boolean;
+  hasTeacherGuide?: boolean;
+  hasOrgAward?: boolean;
 }) {
   return MOCK_ACTIVITIES.filter((activity) => {
     if (filters.keyword) {
@@ -419,6 +441,30 @@ export function filterMockActivities(filters: {
       if (activity.activityStatus !== filters.activityStatus) {
         return false;
       }
+    }
+
+    if (filters.hasPayment && !activity.hasPayment) {
+      return false;
+    }
+
+    if (filters.hasCertificate && !activity.hasCertificate) {
+      return false;
+    }
+
+    if (filters.hasSampleIssue && !activity.hasSampleIssue) {
+      return false;
+    }
+
+    if (filters.hasBonus && !activity.hasBonus) {
+      return false;
+    }
+
+    if (filters.hasTeacherGuide && !activity.hasTeacherGuide) {
+      return false;
+    }
+
+    if (filters.hasOrgAward && !activity.hasOrgAward) {
+      return false;
     }
 
     return true;

@@ -45,6 +45,8 @@ export interface Activity extends Timestamps {
   hasBonus: boolean;         // 是否有奖金
   hasCertificate: boolean;   // 是否有证书
   hasSampleIssue: boolean;    // 是否有样刊
+  hasTeacherGuide: boolean;   // 是否有教师指导奖
+  hasOrgAward: boolean;       // 是否有机构组织奖
   supportSelfSubmission: boolean;  // 是否支持自主投稿
   supportAgentSubmission: boolean; // 是否支持平台代投
   activityStatus: ActivityStatus;
@@ -66,6 +68,9 @@ export interface ActivityFilters {
   hasPayment?: boolean;
   hasCertificate?: boolean;
   hasSampleIssue?: boolean;
+  hasBonus?: boolean;
+  hasTeacherGuide?: boolean;
+  hasOrgAward?: boolean;
   supportSelfSubmission?: boolean;
   supportAgentSubmission?: boolean;
   activityStatus?: ActivityStatus;

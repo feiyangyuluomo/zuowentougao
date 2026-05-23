@@ -35,8 +35,7 @@ export default function AIAssistantPage() {
         <PaywallBlock
           title="登录后使用AI投稿助手"
           description="AI投稿助手需要登录后才能使用，登录后将获得AI分析和推荐功能"
-          actionLabel="立即登录"
-          actionHref="/login"
+          action={{ label: "立即登录", href: "/login" }}
         />
       </div>
     );
@@ -48,8 +47,7 @@ export default function AIAssistantPage() {
         <PaywallBlock
           title="开通会员使用AI功能"
           description="AI投稿助手是会员专享功能，开通会员后可无限次使用AI分析、推荐、改稿等功能"
-          actionLabel="开通会员"
-          actionHref="/membership"
+          action={{ label: "开通会员", href: "/membership" }}
         />
       </div>
     );

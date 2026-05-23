@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getMockActivityById } from "@/lib/mock";
-import { canViewSubmissionEmail } from "@/lib/permissions/activity";
+import { canViewSubmissionMethod, canCreateSelfSubmission } from "@/lib/permissions/activity";
 import { ArrowLeft, Bookmark, Share2, Lock, Send, Sparkles } from "lucide-react";
 
 export default function ActivityDetailPage() {
@@ -19,7 +19,8 @@ export default function ActivityDetailPage() {
   const { isAuthenticated, currentIdentity, entitlements } = useAuthStore();
 
   const activity = getMockActivityById(activityId);
-  const canViewEmail = canViewSubmissionEmail(currentIdentity, entitlements);
+  const canViewEmail = canViewSubmissionMethod(currentIdentity, entitlements);
+  const canRecordSelfSubmission = canCreateSelfSubmission(currentIdentity, entitlements);
 
   if (!activity) {
     return (
@@ -135,14 +136,6 @@ export default function ActivityDetailPage() {
               <CardTitle>投稿操作</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {activity.supportSelfSubmission && (
-                <Link href={`/self-submissions/new?activity=${activity.id}`}>
-                  <Button className="w-full gap-2 bg-primary hover:bg-primary/90">
-                    <Send className="h-4 w-4" />
-                    自主投稿
-                  </Button>
-                </Link>
-              )}
               {!isAuthenticated() ? (
                 <Link href="/login">
                   <Button variant="outline" className="w-full gap-2">
@@ -158,11 +151,21 @@ export default function ActivityDetailPage() {
                   </Button>
                 </Link>
               ) : (
-                activity.supportAgentSubmission && (
-                  <Button variant="outline" className="w-full gap-2 opacity-60" disabled>
-                    平台代投（即将上线）
-                  </Button>
-                )
+                <>
+                  {activity.supportSelfSubmission && (
+                    <Link href={`/self-submissions/new?activity=${activity.id}`}>
+                      <Button className="w-full gap-2 bg-primary hover:bg-primary/90">
+                        <Send className="h-4 w-4" />
+                        自主投稿
+                      </Button>
+                    </Link>
+                  )}
+                  {activity.supportAgentSubmission && (
+                    <Button variant="outline" className="w-full gap-2 opacity-60" disabled>
+                      平台代投（即将上线）
+                    </Button>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>

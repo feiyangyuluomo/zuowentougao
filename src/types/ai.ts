@@ -38,7 +38,7 @@ export interface AIRewriteResult {
 }
 
 // AI标题建议
-export interfaceAITitleSuggestion {
+export interface AITitleSuggestion {
   title: string;
   reasoning: string;
 }

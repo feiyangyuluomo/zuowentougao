@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { FileText, Inbox, Search, FolderOpen } from "lucide-react";
+import Link from "next/link";
 
 interface EmptyStateProps {
   className?: string;
@@ -9,7 +10,8 @@ interface EmptyStateProps {
   description?: string;
   action?: {
     label: string;
-    onClick: () => void;
+    href?: string;
+    onClick?: () => void;
   };
 }
 
@@ -71,7 +73,13 @@ export function EmptyState({
       </p>
 
       {action && (
-        <Button onClick={action.onClick}>{action.label}</Button>
+        action.href ? (
+          <Link href={action.href}>
+            <Button>{action.label}</Button>
+          </Link>
+        ) : (
+          <Button onClick={action.onClick}>{action.label}</Button>
+        )
       )}
     </div>
   );

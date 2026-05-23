@@ -9,7 +9,6 @@ import type {
   UserIdentity,
   Entitlement,
   Membership,
-  AuthState,
 } from "@/types";
 
 // ============================================================================
@@ -58,15 +57,22 @@ const MOCK_MEMBERSHIP: Membership = {
   validTo: new Date("2026-12-31"),
   isLifetime: false,
   status: "active",
+  createdAt: new Date("2025-01-01"),
+  updatedAt: new Date("2025-01-01"),
 };
 
 // 游客权益（无权益）
 const EMPTY_ENTITLEMENTS: Entitlement[] = [];
 
-interface AuthStore extends AuthState {
+interface AuthStore {
   // Data
+  user: User | null;
+  currentIdentity: UserIdentity | null;
+  identities: UserIdentity[];
   entitlements: Entitlement[];
   membership: Membership | null;
+  isLoading: boolean;
+  _isAuthenticated: boolean; // stored state
 
   // Actions
   login: (phone?: string, wxCode?: string) => Promise<void>;
@@ -98,8 +104,8 @@ export const useAuthStore = create<AuthStore>()(
       identities: [],
       entitlements: [],
       membership: null,
-      isAuthenticated: false,
       isLoading: false,
+      _isAuthenticated: false,
 
       // Actions
       login: async (phone?: string, wxCode?: string) => {
@@ -134,7 +140,7 @@ export const useAuthStore = create<AuthStore>()(
             currentIdentity: mockIdentities[0],
             entitlements: MOCK_ENTITLEMENTS,
             membership: MOCK_MEMBERSHIP,
-            isAuthenticated: true,
+            _isAuthenticated: true,
             isLoading: false,
           });
         } catch (error) {
@@ -152,8 +158,8 @@ export const useAuthStore = create<AuthStore>()(
           identities: [],
           entitlements: EMPTY_ENTITLEMENTS,
           membership: null,
-          isAuthenticated: false,
           isLoading: false,
+          _isAuthenticated: false,
         });
       },
 
@@ -164,7 +170,7 @@ export const useAuthStore = create<AuthStore>()(
           identities: [],
           entitlements: [],
           membership: null,
-          isAuthenticated: false,
+          _isAuthenticated: false,
         });
       },
 
@@ -188,7 +194,7 @@ export const useAuthStore = create<AuthStore>()(
       setLoading: (isLoading) => set({ isLoading }),
 
       // Selectors / Computed
-      isAuthenticated: () => get().isAuthenticated,
+      isAuthenticated: () => get()._isAuthenticated,
 
       isMember: () => {
         const { membership } = get();
@@ -211,7 +217,6 @@ export const useAuthStore = create<AuthStore>()(
         user: state.user,
         identities: state.identities,
         currentIdentity: state.currentIdentity,
-        isAuthenticated: state.isAuthenticated,
         entitlements: state.entitlements,
         membership: state.membership,
       }),

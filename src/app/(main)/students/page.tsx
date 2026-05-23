@@ -88,7 +88,7 @@ export default function StudentsPage() {
                     <div>
                       <CardTitle>{student.studentName}</CardTitle>
                       <CardDescription>
-                        {student.school} | {GRADE_LABELS[student.grade] || student.grade}
+                        {student.school} | {student.grade ? GRADE_LABELS[student.grade] || student.grade : ""}
                       </CardDescription>
                     </div>
                   </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { useAuthStore } from "@/stores";
 import { SelfSubmissionForm } from "@/components/submission/SelfSubmissionForm";
 import { PaywallBlock } from "@/components/common";
@@ -9,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-export default function NewSelfSubmissionPage() {
+function NewSelfSubmissionContent() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get("activity");
   const { isAuthenticated, currentIdentity } = useAuthStore();
@@ -21,8 +22,7 @@ export default function NewSelfSubmissionPage() {
         <PaywallBlock
           title="登录后记录投稿"
           description="自主投稿记录功能需要登录后才能使用"
-          actionLabel="立即登录"
-          actionHref="/login"
+          action={{ label: "立即登录", href: "/login" }}
         />
       </div>
     );
@@ -61,5 +61,23 @@ export default function NewSelfSubmissionPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function LoadingContent() {
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="text-center">
+        <p className="text-gray-500">加载中...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function NewSelfSubmissionPage() {
+  return (
+    <Suspense fallback={<LoadingContent />}>
+      <NewSelfSubmissionContent />
+    </Suspense>
   );
 }

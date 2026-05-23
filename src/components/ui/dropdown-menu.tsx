@@ -182,7 +182,6 @@ export {
   DropdownMenuItem,
   DropdownMenuCheckboxItem,
   DropdownMenuRadioItem,
-  DropdownMenu,
   DropdownMenuPortal,
   DropdownMenuSub,
   DropdownMenuSubContent,

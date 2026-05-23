@@ -142,6 +142,7 @@ export const MOCK_ESSAY_VERSIONS: EssayVersion[] = [
     summary: "原创作文",
     createdByIdentityId: "id-001",
     createdAt: new Date("2024-03-15"),
+    updatedAt: new Date("2024-03-15"),
   },
   {
     id: "ver-ess-001-002",
@@ -163,6 +164,7 @@ export const MOCK_ESSAY_VERSIONS: EssayVersion[] = [
     createdByIdentityId: "id-001",
     modelName: "deepseek-chat",
     createdAt: new Date("2024-03-20"),
+    updatedAt: new Date("2024-03-20"),
   },
   {
     id: "ver-ess-003-001",
@@ -172,6 +174,7 @@ export const MOCK_ESSAY_VERSIONS: EssayVersion[] = [
     summary: "原创作文",
     createdByIdentityId: "id-002",
     createdAt: new Date("2024-04-10"),
+    updatedAt: new Date("2024-04-10"),
   },
   {
     id: "ver-ess-003-002",
@@ -193,6 +196,7 @@ export const MOCK_ESSAY_VERSIONS: EssayVersion[] = [
     createdByIdentityId: "id-002",
     modelName: "deepseek-chat",
     createdAt: new Date("2024-04-12"),
+    updatedAt: new Date("2024-04-12"),
   },
 ];
 

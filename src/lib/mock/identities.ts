@@ -65,6 +65,8 @@ export const MOCK_MEMBERSHIP: Membership = {
   validTo: new Date("2026-12-31"),
   isLifetime: false,
   status: "active",
+  createdAt: new Date("2025-01-01"),
+  updatedAt: new Date("2025-01-01"),
 };
 
 // 获取身份
@@ -100,5 +102,7 @@ export const MOCK_MEMBERSHIPS: Membership[] = [
     validTo: new Date("2026-12-31"),
     isLifetime: false,
     status: "active",
+    createdAt: new Date("2025-01-01"),
+    updatedAt: new Date("2025-01-01"),
   },
 ];

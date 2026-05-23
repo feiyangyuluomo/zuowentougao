@@ -11,17 +11,8 @@ import type {
 // 会员相关类型
 // ============================================================================
 
-// 会员信息
-export interface Membership extends Timestamps {
-  id: string;
-  identityId: string;
-  membershipType: MembershipType;
-  gradeScope?: string[];
-  validFrom: Date;
-  validTo: Date;
-  isLifetime: boolean;
-  status: "active" | "expired" | "cancelled";
-}
+// Re-export Membership from user for backward compatibility
+export type { Membership } from "./user";
 
 // 会员权益
 export interface MembershipBenefit {

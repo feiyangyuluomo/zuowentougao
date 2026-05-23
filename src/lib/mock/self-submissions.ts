@@ -2,11 +2,12 @@
 // Mock 自主投稿记录数据
 // ============================================================================
 
-import type { SelfSubmission, SelfSubmissionListItem } from "@/types";
+import type { SelfSubmission, SelfSubmissionListItem, CreateSelfSubmissionParams, SelfSubmissionStatus } from "@/types";
 import { MOCK_ACTIVITIES } from "./activities";
 import { MOCK_ESSAYS } from "./essays";
 
-export const MOCK_SELF_SUBMISSIONS: SelfSubmission[] = [
+// 内存中的投稿记录（可持久化到 localStorage）
+let selfSubmissionsStore: SelfSubmission[] = [
   {
     id: "sub-001",
     essayId: "essay-001",
@@ -18,7 +19,6 @@ export const MOCK_SELF_SUBMISSIONS: SelfSubmission[] = [
     userSubmissionTime: new Date("2024-05-10"),
     userNote: "已按要求格式投稿",
     submissionStatus: "waiting_reply",
-    resultStatus: undefined,
     riskConfirmed: true,
     riskConfirmedAt: new Date("2024-05-10"),
     createdAt: new Date("2024-05-10"),
@@ -35,7 +35,6 @@ export const MOCK_SELF_SUBMISSIONS: SelfSubmission[] = [
     userSubmissionTime: new Date("2024-04-15"),
     userNote: "等待初赛结果",
     submissionStatus: "shortlisted",
-    resultStatus: undefined,
     riskConfirmed: true,
     riskConfirmedAt: new Date("2024-04-15"),
     createdAt: new Date("2024-04-15"),
@@ -52,7 +51,6 @@ export const MOCK_SELF_SUBMISSIONS: SelfSubmission[] = [
     userSubmissionTime: new Date("2024-05-15"),
     userNote: "",
     submissionStatus: "published",
-    resultStatus: "published",
     riskConfirmed: true,
     riskConfirmedAt: new Date("2024-05-15"),
     createdAt: new Date("2024-05-15"),
@@ -75,11 +73,31 @@ export const MOCK_SELF_SUBMISSIONS: SelfSubmission[] = [
   },
 ];
 
-// 获取自主投稿列表
-export function getMockSelfSubmissionList(identityId?: string): SelfSubmissionListItem[] {
-  const submissions = identityId
-    ? MOCK_SELF_SUBMISSIONS.filter((s) => s.identityId === identityId)
-    : MOCK_SELF_SUBMISSIONS;
+// 统一状态枚举
+export const SELF_SUBMISSION_STATUSES: SelfSubmissionStatus[] = [
+  "pending",
+  "user_submitted",
+  "waiting_reply",
+  "shortlisted",
+  "planned_publish",
+  "suspected_published",
+  "published",
+  "rejected",
+  "closed",
+];
+
+/**
+ * 获取所有自主投稿记录
+ */
+export function getMockSelfSubmissions(): SelfSubmission[] {
+  return selfSubmissionsStore;
+}
+
+/**
+ * 根据 identityId 获取自主投稿记录列表
+ */
+export function getMockSelfSubmissionsByIdentity(identityId: string): SelfSubmissionListItem[] {
+  const submissions = selfSubmissionsStore.filter((s) => s.identityId === identityId);
 
   return submissions.map((sub) => {
     const essay = MOCK_ESSAYS.find((e) => e.id === sub.essayId);
@@ -97,17 +115,86 @@ export function getMockSelfSubmissionList(identityId?: string): SelfSubmissionLi
   });
 }
 
-// 根据 ID 获取自主投稿详情
+/**
+ * 创建新的自主投稿记录
+ */
+export function createMockSelfSubmission(
+  params: CreateSelfSubmissionParams,
+  identityId: string
+): SelfSubmission {
+  const newSubmission: SelfSubmission = {
+    id: `sub-${Date.now()}`,
+    essayId: params.essayId,
+    activityId: params.activityId,
+    identityId: identityId,
+    studentId: "",
+    submissionEmail: params.submissionEmail || "",
+    submissionMethod: params.submissionMethod || "email",
+    userSubmissionTime: new Date(),
+    userNote: params.userNote || "",
+    submissionStatus: "user_submitted",
+    riskConfirmed: true,
+    riskConfirmedAt: new Date(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  selfSubmissionsStore.push(newSubmission);
+  return newSubmission;
+}
+
+/**
+ * 更新自主投稿状态
+ */
+export function updateMockSelfSubmissionStatus(
+  submissionId: string,
+  status: SelfSubmissionStatus,
+  note?: string
+): SelfSubmission | null {
+  const submission = selfSubmissionsStore.find((s) => s.id === submissionId);
+  if (!submission) return null;
+
+  submission.submissionStatus = status;
+  submission.updatedAt = new Date();
+
+  if (note !== undefined) {
+    submission.userNote = note;
+  }
+
+  return submission;
+}
+
+/**
+ * 根据 ID 获取自主投稿详情
+ */
 export function getMockSelfSubmissionById(id: string): SelfSubmission | null {
-  return MOCK_SELF_SUBMISSIONS.find((s) => s.id === id) || null;
+  return selfSubmissionsStore.find((s) => s.id === id) || null;
 }
 
-// 获取某作文的所有自主投稿记录
+/**
+ * 获取某作文的所有自主投稿记录
+ */
 export function getMockSelfSubmissionsByEssayId(essayId: string): SelfSubmission[] {
-  return MOCK_SELF_SUBMISSIONS.filter((s) => s.essayId === essayId);
+  return selfSubmissionsStore.filter((s) => s.essayId === essayId);
 }
 
-// 获取某活动的所有自主投稿记录
+/**
+ * 获取某活动的所有自主投稿记录
+ */
 export function getMockSelfSubmissionsByActivityId(activityId: string): SelfSubmission[] {
-  return MOCK_SELF_SUBMISSIONS.filter((s) => s.activityId === activityId);
+  return selfSubmissionsStore.filter((s) => s.activityId === activityId);
+}
+
+/**
+ * 删除自主投稿记录（仅 pending 状态可删除）
+ */
+export function deleteMockSelfSubmission(submissionId: string): boolean {
+  const index = selfSubmissionsStore.findIndex((s) => s.id === submissionId);
+  if (index === -1) return false;
+
+  const submission = selfSubmissionsStore[index];
+  if (submission.submissionStatus !== "pending") return false;
+
+  selfSubmissionsStore.splice(index, 1);
+  return true;
 }

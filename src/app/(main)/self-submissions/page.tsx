@@ -1,74 +1,64 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/common";
-import { SELF_SUBMISSION_STATUS } from "@/constants";
-import {
-  Send,
-  Plus,
-  Search,
-  Calendar,
-  Filter,
-  MoreHorizontal,
-  Eye,
-  CheckCircle,
-} from "lucide-react";
+import { PaywallBlock } from "@/components/common";
+import { useAuthStore } from "@/stores";
+import { getMockSelfSubmissionsByIdentity, SELF_SUBMISSION_STATUSES } from "@/lib/mock/self-submissions";
+import { getSubmissionStatusBadge } from "@/lib/utils";
+import { Plus, Search, Calendar, Eye } from "lucide-react";
 import Link from "next/link";
-
-// TODO: Replace with actual data
-
-const mockSubmissions = [
-  {
-    id: "sub-001",
-    essayTitle: "我的植物朋友",
-    activityTitle: "2024年"童心向未来"主题作文征集",
-    activityPublisher: "少年文艺杂志",
-    submissionStatus: "user_submitted" as const,
-    userSubmissionTime: new Date("2024-04-15"),
-    createdAt: new Date("2024-04-10"),
-  },
-  {
-    id: "sub-002",
-    essayTitle: "春天的小区",
-    activityTitle: "第十届"春之声"作文大赛",
-    activityPublisher: "小学生拼音报社",
-    submissionStatus: "waiting_reply" as const,
-    userSubmissionTime: new Date("2024-04-20"),
-    createdAt: new Date("2024-04-18"),
-  },
-  {
-    id: "sub-003",
-    essayTitle: "记一次有趣的科学实验",
-    activityTitle: "2024年度"创新杯"校园文学征集",
-    activityPublisher: "创新作文杂志",
-    submissionStatus: "shortlisted" as const,
-    userSubmissionTime: new Date("2024-05-01"),
-    createdAt: new Date("2024-04-25"),
-  },
-];
+import type { SelfSubmissionListItem, SelfSubmissionStatus } from "@/types";
 
 export default function SelfSubmissionsPage() {
+  const { isAuthenticated, currentIdentity } = useAuthStore();
+  const [submissions, setSubmissions] = useState<SelfSubmissionListItem[]>([]);
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const filteredSubmissions = mockSubmissions.filter((sub) => {
+  // 加载数据
+  useEffect(() => {
+    if (isAuthenticated() && currentIdentity) {
+      const data = getMockSelfSubmissionsByIdentity(currentIdentity.id);
+      setSubmissions(data);
+    }
+  }, [isAuthenticated, currentIdentity, refreshKey]);
+
+  // 过滤
+  const filteredSubmissions = submissions.filter((sub) => {
     if (searchKeyword) {
+      const keyword = searchKeyword.toLowerCase();
       if (
-        !sub.essayTitle.toLowerCase().includes(searchKeyword.toLowerCase()) &&
-        !sub.activityTitle.toLowerCase().includes(searchKeyword.toLowerCase())
+        !sub.essayTitle.toLowerCase().includes(keyword) &&
+        !sub.activityTitle.toLowerCase().includes(keyword)
       ) {
         return false;
       }
     }
-    if (selectedStatus && sub.submissionStatus !== selectedStatus) {
+    if (selectedStatus !== "all" && sub.submissionStatus !== selectedStatus) {
       return false;
     }
     return true;
   });
+
+  // 未登录
+  if (!isAuthenticated()) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <PaywallBlock
+          title="登录后查看投稿记录"
+          description="自主投稿记录需要登录后才能查看"
+          action={{ label: "立即登录", href: "/login" }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -92,20 +82,21 @@ export default function SelfSubmissionsPage() {
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
+          <Input
             type="text"
             placeholder="搜索作文或活动..."
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
-            className="w-full h-10 pl-10 pr-4 rounded-md border border-input bg-background text-sm"
+            className="pl-10"
           />
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="all">
+      {/* Tabs - 状态筛选 */}
+      <Tabs value={selectedStatus} onValueChange={setSelectedStatus}>
         <TabsList>
           <TabsTrigger value="all">全部</TabsTrigger>
+          <TabsTrigger value="pending">待投稿</TabsTrigger>
           <TabsTrigger value="user_submitted">已投稿</TabsTrigger>
           <TabsTrigger value="waiting_reply">等待回复</TabsTrigger>
           <TabsTrigger value="published">已刊登</TabsTrigger>
@@ -121,7 +112,7 @@ export default function SelfSubmissionsPage() {
           description="记录您的第一次自主投稿，开始您的投稿之旅"
           action={{
             label: "记录投稿",
-            onClick: () => {},
+            href: "/activities",
           }}
         />
       ) : (
@@ -132,42 +123,33 @@ export default function SelfSubmissionsPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge
-                        variant={
-                          submission.submissionStatus === "published"
-                            ? "success"
-                            : submission.submissionStatus === "shortlisted"
-                            ? "info"
-                            : "secondary"
-                        }
-                      >
-                        {SELF_SUBMISSION_STATUS[submission.submissionStatus]?.label ||
-                          submission.submissionStatus}
-                      </Badge>
+                      {getSubmissionStatusBadge(submission.submissionStatus)}
                     </div>
-                    <Link href={`/essays/${submission.id}`}>
-                      <h3 className="text-lg font-semibold text-gray-900 hover:text-primary">
-                        {submission.essayTitle}
-                      </h3>
-                    </Link>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {submission.essayTitle}
+                    </h3>
                     <p className="text-sm text-gray-500 mt-1">
                       投给：{submission.activityTitle}
                     </p>
                     <p className="text-sm text-gray-400">
                       {submission.activityPublisher}
                     </p>
-                    <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        投稿时间：{new Date(submission.userSubmissionTime).toLocaleDateString("zh-CN")}
-                      </span>
-                    </div>
+                    {submission.userSubmissionTime && (
+                      <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          投稿时间：{new Date(submission.userSubmissionTime).toLocaleDateString("zh-CN")}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="gap-1">
-                      <Eye className="h-4 w-4" />
-                      查看
-                    </Button>
+                    <Link href={`/activities/${submission.id}`}>
+                      <Button variant="outline" size="sm" className="gap-1">
+                        <Eye className="h-4 w-4" />
+                        查看
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               </CardContent>

@@ -66,7 +66,7 @@ export const STATUS_COLORS = {
   rejected: "bg-red-100 text-red-800",
   // 投稿状态
   published: "bg-green-100 text-green-800",
-  rejected: "bg-red-100 text-red-800",
+  submission_rejected: "bg-red-100 text-red-800",
   waiting_reply: "bg-blue-100 text-blue-800",
   shortlisted: "bg-purple-100 text-purple-800",
   planned_publish: "bg-indigo-100 text-indigo-800",

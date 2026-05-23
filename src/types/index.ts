@@ -14,8 +14,26 @@ export type {
   User,
   UserIdentity,
   Student,
-  Activity,
-  Essay,
-  SelfSubmission,
-  AgentSubmissionTask,
 } from "./user";
+
+export type {
+  Activity,
+  ActivityListItem,
+  ActivityFilters,
+  AIRecommendedActivity,
+} from "./activity";
+
+export type {
+  Essay,
+  EssayVersion,
+  EssayListItem,
+  EssayUploadParams,
+} from "./essay";
+
+export type {
+  SelfSubmission,
+  SelfSubmissionListItem,
+  CreateSelfSubmissionParams,
+  AgentSubmissionTask,
+  AgentSubmissionListItem,
+} from "./submission";

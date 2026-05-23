@@ -19,21 +19,33 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 import { User, Users, Briefcase, ChevronDown, Check } from "lucide-react";
 
 // TODO: Replace with actual auth store
-const mockIdentities = [
+const mockIdentities: Array<{
+  id: string;
+  identityType: "parent" | "teacher" | "organization_admin";
+  name: string;
+  studentCount?: number;
+}> = [
   {
     id: "id-001",
-    identityType: "parent" as const,
+    identityType: "parent",
     name: "家长身份",
     studentCount: 2,
   },
   {
     id: "id-002",
-    identityType: "teacher" as const,
+    identityType: "teacher",
     name: "老师身份",
     studentCount: 15,
+  },
+  {
+    id: "id-003",
+    identityType: "organization_admin",
+    name: "机构管理员",
+    studentCount: 0,
   },
 ];
 
@@ -140,25 +152,5 @@ export function IdentitySwitcher({ className }: IdentitySwitcherProps) {
         </DialogContent>
       </Dialog>
     </>
-  );
-}
-
-// 需要引入Link组件
-import Link from "next/link";
-
-function Link({
-  href,
-  children,
-  className,
-  ...props
-}: React.ComponentProps<"a"> & { href: string }) {
-  return (
-    <a
-      href={href}
-      className={className}
-      {...props}
-    >
-      {children}
-    </a>
   );
 }

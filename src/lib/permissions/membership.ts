@@ -31,14 +31,14 @@ export function canViewActivityDetail(
 /**
  * 检查是否具有AI改稿权益
  */
-export function canUseAIRewrite(entitlements: Entitlement[]): boolean {
+export function canUseAIRewriteEntitlement(entitlements: Entitlement[]): boolean {
   return hasEntitlement(entitlements, "ai_rewrite");
 }
 
 /**
  * 检查是否具有AI推荐活动权益
  */
-export function canUseAIRecommend(entitlements: Entitlement[]): boolean {
+export function canUseAIRecommendEntitlement(entitlements: Entitlement[]): boolean {
   return hasEntitlement(entitlements, "ai_recommend");
 }
 
