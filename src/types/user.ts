@@ -126,7 +126,7 @@ export interface Organization extends Timestamps {
 // 班级
 export interface Class extends Timestamps {
   id: string;
-  organizationId: string;
+  organizationId?: string;
   teacherIdentityId: string;
   className: string;
   grade?: string;

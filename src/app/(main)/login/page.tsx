@@ -62,6 +62,24 @@ export default function LoginPage() {
     }
   };
 
+  const handleTestTeacherLogin = async () => {
+    try {
+      await login("13800138003");
+      router.push("/workspace");
+    } catch (err) {
+      setError("登录失败，请重试");
+    }
+  };
+
+  const handleTestOrgAdminLogin = async () => {
+    try {
+      await login("13800138004");
+      router.push("/workspace");
+    } catch (err) {
+      setError("登录失败，请重试");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col">
       {/* Header */}
@@ -162,6 +180,22 @@ export default function LoginPage() {
                 onClick={handleTestOperatorLogin}
               >
                 运营人员体验
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:text-blue-800"
+                onClick={handleTestTeacherLogin}
+              >
+                个人老师体验
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 hover:text-purple-800"
+                onClick={handleTestOrgAdminLogin}
+              >
+                机构管理员体验
               </Button>
             </div>
           </CardContent>

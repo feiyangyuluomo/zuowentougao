@@ -67,6 +67,20 @@ export function isTeacher(identity: UserIdentity | null): boolean {
 }
 
 /**
+ * 检查是否是机构管理员
+ */
+export function isOrganizationAdmin(identity: UserIdentity | null): boolean {
+  return identity?.identityType === "organization_admin";
+}
+
+/**
+ * 检查是否是机构老师
+ */
+export function isOrganizationTeacher(identity: UserIdentity | null): boolean {
+  return identity?.identityType === "organization_teacher";
+}
+
+/**
  * 检查是否是家长身份
  */
 export function isParent(identity: UserIdentity | null): boolean {

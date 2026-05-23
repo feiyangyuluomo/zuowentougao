@@ -111,10 +111,16 @@ export const useAuthStore = create<AuthStore>()(
       login: async (phone?: string, wxCode?: string) => {
         set({ isLoading: true });
         try {
-          // Mock 登录成功
+          // 根据手机号设置用户昵称
+          const nicknames: Record<string, string> = {
+            "13800138001": "付费家长小明",
+            "13800138002": "运营小王",
+            "13800138003": "张老师",
+            "13800138004": "李管理员",
+          };
           const mockUser: User = {
             id: "user-001",
-            nickname: "小明同学",
+            nickname: nicknames[phone || "13800138000"] || "游客",
             phone: phone || "13800138000",
             avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=user-001",
             status: "active",
@@ -124,11 +130,33 @@ export const useAuthStore = create<AuthStore>()(
 
           // 根据手机号判断身份类型
           const isOperator = phone === "13800138002";
+          const isTeacher = phone === "13800138003";
+          const isOrgAdmin = phone === "13800138004";
+
+          // 确定身份类型
+          let identityType: "parent" | "operator" | "teacher" | "organization_admin";
+          if (isOperator) {
+            identityType = "operator";
+          } else if (isTeacher) {
+            identityType = "teacher";
+          } else if (isOrgAdmin) {
+            identityType = "organization_admin";
+          } else {
+            identityType = "parent";
+          }
+
           const mockIdentities: UserIdentity[] = [
             {
-              id: isOperator ? "id-operator-001" : "id-001",
+              id: isOperator
+                ? "id-operator-001"
+                : isTeacher
+                  ? "id-teacher-001"
+                  : isOrgAdmin
+                    ? "id-org-admin-001"
+                    : "id-001",
               userId: mockUser.id,
-              identityType: isOperator ? "operator" : "parent",
+              identityType,
+              organizationId: isOrgAdmin ? "org-001" : undefined,
               status: "active",
               createdAt: new Date(),
               updatedAt: new Date(),
