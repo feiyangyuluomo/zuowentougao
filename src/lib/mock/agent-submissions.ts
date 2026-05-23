@@ -386,6 +386,7 @@ export function createMockAgentSubmission(
   };
 
   agentSubmissionsStore.push(newTask);
+  persistMockAgentData();
 
   // 添加日志
   const log: AgentSubmissionLog = {
@@ -432,6 +433,7 @@ export function updateMockAgentSubmissionFrontendStatus(
 
   task.frontendStatus = status;
   task.updatedAt = new Date();
+  persistMockAgentData();
 
   return task;
 }
@@ -463,6 +465,7 @@ export function updateMockAgentSubmissionBackendStatus(
     updatedAt: new Date(),
   };
   logsStore.push(log);
+  persistMockAgentData();
 
   task.backendStatus = backendStatus;
   task.frontendStatus = frontendStatus;
@@ -494,6 +497,7 @@ export function uploadMockSubmissionScreenshot(
   };
 
   screenshotsStore.push(newScreenshot);
+  persistMockAgentData();
   return newScreenshot;
 }
 
@@ -523,4 +527,122 @@ export function getMockWaitingAssignTasks(): AgentSubmissionTask[] {
  */
 export function getMockAllAgentSubmissions(): AgentSubmissionTask[] {
   return agentSubmissionsStore;
+}
+
+/**
+ * 更新代投任务备注
+ */
+export function updateMockAgentSubmissionNotes(
+  taskId: string,
+  operatorId: string,
+  operatorNote?: string,
+  userVisibleNote?: string
+): AgentSubmissionTask | null {
+  const task = agentSubmissionsStore.find((t) => t.id === taskId);
+  if (!task) return null;
+
+  const log: AgentSubmissionLog = {
+    id: `log-${Date.now()}`,
+    taskId: taskId,
+    operatorIdentityId: operatorId,
+    oldFrontendStatus: task.frontendStatus,
+    newFrontendStatus: task.frontendStatus,
+    oldBackendStatus: task.backendStatus,
+    newBackendStatus: task.backendStatus,
+    note: operatorNote || "更新备注",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  logsStore.push(log);
+
+  if (operatorNote !== undefined) {
+    task.operatorNote = operatorNote;
+  }
+  if (userVisibleNote !== undefined) {
+    task.userVisibleNote = userVisibleNote;
+  }
+  task.updatedAt = new Date();
+
+  persistMockAgentData();
+  return task;
+}
+
+// ============================================================================
+// localStorage 持久化
+// ============================================================================
+
+const STORAGE_KEYS = {
+  TASKS: "mock_agent_tasks",
+  SCREENSHOTS: "mock_agent_screenshots",
+  LOGS: "mock_agent_logs",
+};
+
+function isValidDate(value: unknown): value is Date {
+  return value instanceof Date && !isNaN(value.getTime());
+}
+
+function reviveDates<T extends object>(obj: T): T {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj !== "object") return obj;
+
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
+      result[key] = new Date(value);
+    } else if (Array.isArray(value)) {
+      result[key] = value.map(item => reviveDates(item as object));
+    } else if (typeof value === "object" && value !== null) {
+      result[key] = reviveDates(value as object);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result as T;
+}
+
+function loadFromStorage<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return reviveDates(parsed);
+    }
+  } catch (e) {
+    console.warn(`Failed to load ${key} from localStorage:`, e);
+  }
+  return fallback;
+}
+
+function saveToStorage<T>(key: string, data: T): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (e) {
+    console.warn(`Failed to save ${key} to localStorage:`, e);
+  }
+}
+
+// 初始化：从 localStorage 加载数据
+export function initMockAgentData(): void {
+  const storedTasks = loadFromStorage<AgentSubmissionTask[]>(STORAGE_KEYS.TASKS, []);
+  const storedScreenshots = loadFromStorage<AgentSubmissionScreenshot[]>(STORAGE_KEYS.SCREENSHOTS, []);
+  const storedLogs = loadFromStorage<AgentSubmissionLog[]>(STORAGE_KEYS.LOGS, []);
+
+  if (storedTasks.length > 0) {
+    agentSubmissionsStore = storedTasks;
+  }
+  if (storedScreenshots.length > 0) {
+    screenshotsStore = storedScreenshots;
+  }
+  if (storedLogs.length > 0) {
+    logsStore = storedLogs;
+  }
+}
+
+// 保存数据到 localStorage
+export function persistMockAgentData(): void {
+  saveToStorage(STORAGE_KEYS.TASKS, agentSubmissionsStore);
+  saveToStorage(STORAGE_KEYS.SCREENSHOTS, screenshotsStore);
+  saveToStorage(STORAGE_KEYS.LOGS, logsStore);
 }

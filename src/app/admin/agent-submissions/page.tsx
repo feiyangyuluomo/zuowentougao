@@ -27,6 +27,7 @@ import { useAuthStore } from "@/stores";
 import {
   getMockAllAgentSubmissions,
   updateMockAgentSubmissionBackendStatus,
+  updateMockAgentSubmissionNotes,
   uploadMockSubmissionScreenshot,
   getMockScreenshotsByTaskId,
   getMockAgentSubmissionLogs,
@@ -132,6 +133,21 @@ export default function AdminAgentSubmissionsPage() {
         targetFrontendStatus as AgentSubmissionFrontendStatus,
         currentIdentity.id,
         operatorNote,
+        userVisibleNote || undefined
+      );
+    } else if (actionType === "screenshot") {
+      uploadMockSubmissionScreenshot(selectedTask.id, {
+        taskId: selectedTask.id,
+        screenshotType: screenshotType,
+        fileUrl: `/mock/screenshots/${selectedTask.id}-${Date.now()}.png`,
+        visibleToUser: true,
+        uploadedByIdentityId: currentIdentity.id,
+      });
+    } else if (actionType === "note") {
+      updateMockAgentSubmissionNotes(
+        selectedTask.id,
+        currentIdentity.id,
+        operatorNote || undefined,
         userVisibleNote || undefined
       );
     }

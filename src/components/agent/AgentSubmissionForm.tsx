@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores";
 import {
   createMockAgentSubmission,
-  getMockAgentSubmissionsByIdentity,
 } from "@/lib/mock/agent-submissions";
 import { MOCK_ESSAYS } from "@/lib/mock/essays";
 import { MOCK_ACTIVITIES } from "@/lib/mock/activities";
@@ -43,17 +42,9 @@ export function AgentSubmissionForm({ activity, onSuccess }: AgentSubmissionForm
 
   useEffect(() => {
     if (isAuthenticated() && currentIdentity) {
-      // 获取用户已提交的作文ID列表（自主投稿 + 代投）
-      const submittedEssays = getMockAgentSubmissionsByIdentity(currentIdentity.id);
-      const submittedEssayIds = new Set(submittedEssays.map(s => {
-        // 需要从 essayTitle 反查，这里简化处理
-        return s.id; // 实际应该根据 essayTitle 匹配
-      }));
-
-      // 过滤出用户未投稿的作文作为可选
+      // 获取用户已创建的作文列表（用于下拉选择）
       const essays = MOCK_ESSAYS.filter(e =>
         e.ownerIdentityId === currentIdentity.id
-        // 暂时不过滤已投稿，因为 getMockAgentSubmissionsByIdentity 返回的 id 实际是 task id
       );
       setAvailableEssays(essays);
     }

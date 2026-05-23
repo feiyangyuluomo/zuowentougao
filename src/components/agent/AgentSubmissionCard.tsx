@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Image, Clock, Calendar } from "lucide-react";
+import { Eye, Calendar } from "lucide-react";
 import type { AgentSubmissionListItem, AgentSubmissionFrontendStatus } from "@/types";
 
 // 前台状态标签映射
@@ -41,10 +41,9 @@ const FRONTEND_STATUS_COLORS: Record<AgentSubmissionFrontendStatus, string> = {
 
 interface AgentSubmissionCardProps {
   submission: AgentSubmissionListItem;
-  onViewDetails?: () => void;
 }
 
-export function AgentSubmissionCard({ submission, onViewDetails }: AgentSubmissionCardProps) {
+export function AgentSubmissionCard({ submission }: AgentSubmissionCardProps) {
   const statusLabel = FRONTEND_STATUS_LABELS[submission.frontendStatus] || submission.frontendStatus;
   const statusColor = FRONTEND_STATUS_COLORS[submission.frontendStatus] || "bg-gray-100 text-gray-700";
 
@@ -82,14 +81,10 @@ export function AgentSubmissionCard({ submission, onViewDetails }: AgentSubmissi
             )}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-1" onClick={onViewDetails}>
-              <Eye className="h-4 w-4" />
-              查看
-            </Button>
             <Link href={`/agent-submissions/${submission.id}`}>
-              <Button variant="ghost" size="sm" className="gap-1">
-                <Image className="h-4 w-4" />
-                截图
+              <Button variant="outline" size="sm" className="gap-1">
+                <Eye className="h-4 w-4" />
+                查看详情
               </Button>
             </Link>
           </div>
