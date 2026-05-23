@@ -9,6 +9,17 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, BookOpen, Mail, Award, Clock } from "lucide-react";
 import type { Activity } from "@/types";
 import { formatDeadline, getActivityStatusBadge } from "@/lib/utils";
+import { GRADE_LABELS } from "@/constants";
+
+// 文体标签
+const GENRE_LABELS: Record<string, string> = {
+  narrative: "记叙文",
+  argumentative: "议论文",
+  prose: "散文",
+  poetry: "诗歌",
+  letter: "书信",
+  speech: "演讲稿",
+};
 
 interface ActivityCardProps {
   activity: Activity;
@@ -57,11 +68,11 @@ export function ActivityCard({ activity, showMemberBadge = false }: ActivityCard
         <div className="flex flex-wrap gap-2 text-xs text-gray-500">
           <span className="flex items-center gap-1">
             <BookOpen className="h-3 w-3" />
-            {activity.gradeScope?.join(", ") || "不限年级"}
+            {activity.gradeScope?.map(g => GRADE_LABELS[g] || g).join(", ") || "不限年级"}
           </span>
           {activity.genre && activity.genre.length > 0 && (
             <span className="px-2 py-0.5 bg-gray-100 rounded">
-              {activity.genre.join("/")}
+              {activity.genre.map(g => GENRE_LABELS[g] || g).join("/")}
             </span>
           )}
         </div>
@@ -69,10 +80,14 @@ export function ActivityCard({ activity, showMemberBadge = false }: ActivityCard
 
       <CardFooter className="pt-0 flex items-center justify-between">
         <div className="flex items-center gap-1 text-sm text-gray-500">
-          <Clock className="h-4 w-4" />
-          <span className={activity.activityStatus === "closing_soon" ? "text-amber-600" : ""}>
-            {deadlineText}
-          </span>
+          {activity.activityStatus !== "closed" && (
+            <>
+              <Clock className="h-4 w-4" />
+              <span className={activity.activityStatus === "closing_soon" ? "text-amber-600" : ""}>
+                {deadlineText}
+              </span>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-2">

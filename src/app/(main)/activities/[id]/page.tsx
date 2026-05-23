@@ -140,14 +140,14 @@ export default function ActivityDetailPage() {
                 <Link href="/login">
                   <Button variant="outline" className="w-full gap-2">
                     <Lock className="h-4 w-4" />
-                    登录后查看投稿方式
+                    登录后记录投稿
                   </Button>
                 </Link>
-              ) : !canViewEmail ? (
+              ) : !canRecordSelfSubmission ? (
                 <Link href="/membership">
                   <Button variant="outline" className="w-full gap-2">
                     <Lock className="h-4 w-4" />
-                    开通会员查看完整方式
+                    开通会员记录投稿
                   </Button>
                 </Link>
               ) : (
@@ -161,9 +161,12 @@ export default function ActivityDetailPage() {
                     </Link>
                   )}
                   {activity.supportAgentSubmission && (
-                    <Button variant="outline" className="w-full gap-2 opacity-60" disabled>
-                      平台代投（即将上线）
-                    </Button>
+                    <Link href={`/agent-submissions/new?activity=${activity.id}`}>
+                      <Button variant="outline" className="w-full gap-2 bg-orange-500 text-white hover:bg-orange-600">
+                        <Send className="h-4 w-4" />
+                        平台代投
+                      </Button>
+                    </Link>
                   )}
                 </>
               )}

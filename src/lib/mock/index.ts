@@ -8,6 +8,7 @@ export * from "./essays";
 export * from "./users";
 export * from "./identities";
 export * from "./self-submissions";
+export * from "./agent-submissions";
 export * from "./ai-results";
 
 // 导出一个便捷的mock数据初始化函数
@@ -22,6 +23,7 @@ export function initializeMockData() {
     users: true,
     identities: true,
     selfSubmissions: true,
+    agentSubmissions: true,
     aiResults: true,
   };
 }

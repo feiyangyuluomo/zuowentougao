@@ -44,6 +44,24 @@ export default function LoginPage() {
     router.push("/");
   };
 
+  const handleTestParentLogin = async () => {
+    try {
+      await login("13800138001");
+      router.push("/");
+    } catch (err) {
+      setError("登录失败，请重试");
+    }
+  };
+
+  const handleTestOperatorLogin = async () => {
+    try {
+      await login("13800138002");
+      router.push("/admin/agent-submissions");
+    } catch (err) {
+      setError("登录失败，请重试");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col">
       {/* Header */}
@@ -118,6 +136,34 @@ export default function LoginPage() {
             >
               游客浏览（部分功能受限）
             </Button>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-gray-500">体验账号</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 bg-green-50 border-green-200 text-green-700 hover:bg-green-100 hover:text-green-800"
+                onClick={handleTestParentLogin}
+              >
+                付费家长体验
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 hover:text-orange-800"
+                onClick={handleTestOperatorLogin}
+              >
+                运营人员体验
+              </Button>
+            </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-2 text-center text-sm text-gray-500">
             <p>

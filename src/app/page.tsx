@@ -146,8 +146,8 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            {/* 平台代投 (Phase 1 不做) */}
-            <Card className="border-2 hover:border-primary/30 transition-colors opacity-60">
+            {/* 平台代投 */}
+            <Card className="border-2 hover:border-primary/30 transition-colors">
               <CardHeader>
                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100 mb-4">
                   <TrendingUp className="h-6 w-6 text-orange-600" />
@@ -163,7 +163,9 @@ export default function HomePage() {
                   <Badge variant="secondary">进度跟踪</Badge>
                   <Badge variant="secondary">截图凭证</Badge>
                 </div>
-                <span className="text-gray-400 text-sm">即将上线</span>
+                <Link href={isAuthenticated() ? "/agent-submissions" : "/login"} className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all">
+                  申请代投 <ArrowRight className="h-4 w-4" />
+                </Link>
               </CardContent>
             </Card>
 

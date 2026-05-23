@@ -32,7 +32,9 @@ export interface SelfSubmission extends Timestamps {
 // 自主投稿列表项
 export interface SelfSubmissionListItem {
   id: string;
+  essayId: string;
   essayTitle: string;
+  activityId: string;
   activityTitle: string;
   activityPublisher: string;
   submissionStatus: SelfSubmissionStatus;

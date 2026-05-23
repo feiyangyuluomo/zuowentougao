@@ -105,7 +105,9 @@ export function getMockSelfSubmissionsByIdentity(identityId: string): SelfSubmis
 
     return {
       id: sub.id,
+      essayId: sub.essayId,
       essayTitle: essay?.title || "未知作文",
+      activityId: sub.activityId,
       activityTitle: activity?.title || "未知活动",
       activityPublisher: activity?.publisher?.name || "未知征稿方",
       submissionStatus: sub.submissionStatus,

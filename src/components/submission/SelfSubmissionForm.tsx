@@ -2,10 +2,11 @@
 // 自主投稿表单组件
 // ============================================================================
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores";
-import { createMockSelfSubmission } from "@/lib/mock/self-submissions";
+import { createMockSelfSubmission, getMockSelfSubmissionsByIdentity } from "@/lib/mock/self-submissions";
+import { MOCK_ESSAYS } from "@/lib/mock/essays";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertTriangle, Check, Send } from "lucide-react";
-import type { Activity, SubmissionMethod } from "@/types";
+import type { Activity, SubmissionMethod, Essay } from "@/types";
 
 interface SelfSubmissionFormProps {
   activity: Activity;
@@ -24,7 +25,8 @@ interface SelfSubmissionFormProps {
 
 export function SelfSubmissionForm({ activity, essayId, onSuccess }: SelfSubmissionFormProps) {
   const router = useRouter();
-  const { currentIdentity } = useAuthStore();
+  const { currentIdentity, isAuthenticated } = useAuthStore();
+  const [selectedEssayId, setSelectedEssayId] = useState<string>(essayId || "");
   const [submissionEmail, setSubmissionEmail] = useState("");
   const [submissionMethod, setSubmissionMethod] = useState<SubmissionMethod>(activity.submissionMethod || "email");
   const [userNote, setUserNote] = useState("");
@@ -33,11 +35,33 @@ export function SelfSubmissionForm({ activity, essayId, onSuccess }: SelfSubmiss
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 获取用户已有的作文列表（用于下拉选择）
+  const [availableEssays, setAvailableEssays] = useState<Essay[]>([]);
+
+  useEffect(() => {
+    if (isAuthenticated() && currentIdentity) {
+      // 获取用户已提交的作文ID列表
+      const submittedSubs = getMockSelfSubmissionsByIdentity(currentIdentity.id);
+      const submittedEssayIds = new Set(submittedSubs.map(s => s.essayId));
+
+      // 过滤出用户未投稿的作文作为可选
+      const essays = MOCK_ESSAYS.filter(e =>
+        e.ownerIdentityId === currentIdentity.id && !submittedEssayIds.has(e.id)
+      );
+      setAvailableEssays(essays);
+    }
+  }, [isAuthenticated, currentIdentity]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!currentIdentity) {
       setError("请先登录");
+      return;
+    }
+
+    if (!selectedEssayId) {
+      setError("请选择要投稿的作文");
       return;
     }
 
@@ -53,7 +77,7 @@ export function SelfSubmissionForm({ activity, essayId, onSuccess }: SelfSubmiss
       // 调用 mock 创建投稿记录
       createMockSelfSubmission(
         {
-          essayId: essayId || "",
+          essayId: selectedEssayId,
           activityId: activity.id,
           submissionEmail,
           submissionMethod,
@@ -123,6 +147,30 @@ export function SelfSubmissionForm({ activity, essayId, onSuccess }: SelfSubmiss
             <div className="text-sm text-gray-500 mb-1">当前活动</div>
             <div className="font-medium">{activity.title}</div>
             <div className="text-sm text-gray-500">{activity.publisher?.name}</div>
+          </div>
+
+          {/* 作文选择 */}
+          <div>
+            <Label htmlFor="essaySelect">选择要投稿的作文</Label>
+            <Select value={selectedEssayId} onValueChange={setSelectedEssayId}>
+              <SelectTrigger className="mt-2">
+                <SelectValue placeholder="请选择作文" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableEssays.length > 0 ? (
+                  availableEssays.map((essay) => (
+                    <SelectItem key={essay.id} value={essay.id}>
+                      {essay.title}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="px-4 py-2 text-sm text-gray-500">暂无可投稿的作文</div>
+                )}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-gray-400 mt-1">
+              请先在"我的作文"中创建作文，或选择已有作文进行投稿
+            </p>
           </div>
 
           {/* 投稿邮箱 */}

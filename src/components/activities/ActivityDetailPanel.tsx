@@ -12,6 +12,7 @@ import { Lock, Mail, Globe, Send, FileText, AlertTriangle, Check, Star, Award } 
 import Link from "next/link";
 import type { Activity } from "@/types";
 import { formatDate } from "@/lib/utils";
+import { GRADE_LABELS } from "@/constants";
 
 interface ActivityDetailPanelProps {
   activity: Activity;
@@ -76,7 +77,7 @@ export function ActivityDetailPanel({ activity }: ActivityDetailPanelProps) {
             </div>
             <div>
               <span className="text-gray-500">适合年级：</span>
-              <span className="font-medium">{activity.gradeScope?.join(", ") || "不限"}</span>
+              <span className="font-medium">{activity.gradeScope?.map(g => GRADE_LABELS[g] || g).join(", ") || "不限"}</span>
             </div>
             <div>
               <span className="text-gray-500">征稿主题：</span>
