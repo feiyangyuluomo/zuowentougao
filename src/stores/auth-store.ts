@@ -122,24 +122,29 @@ export const useAuthStore = create<AuthStore>()(
             updatedAt: new Date(),
           };
 
-          // 模拟会员身份
+          // 根据手机号判断身份类型
+          const isOperator = phone === "13800138002";
           const mockIdentities: UserIdentity[] = [
             {
-              id: "id-001",
+              id: isOperator ? "id-operator-001" : "id-001",
               userId: mockUser.id,
-              identityType: "parent",
+              identityType: isOperator ? "operator" : "parent",
               status: "active",
               createdAt: new Date(),
               updatedAt: new Date(),
             },
           ];
 
+          // 运营人员没有会员权益
+          const entitlements = isOperator ? [] : MOCK_ENTITLEMENTS;
+          const membership = isOperator ? null : MOCK_MEMBERSHIP;
+
           set({
             user: mockUser,
             identities: mockIdentities,
             currentIdentity: mockIdentities[0],
-            entitlements: MOCK_ENTITLEMENTS,
-            membership: MOCK_MEMBERSHIP,
+            entitlements,
+            membership,
             _isAuthenticated: true,
             isLoading: false,
           });

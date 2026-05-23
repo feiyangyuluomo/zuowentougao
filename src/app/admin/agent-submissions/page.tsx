@@ -32,6 +32,7 @@ import {
   getMockScreenshotsByTaskId,
   getMockAgentSubmissionLogs,
   acceptMockAgentSubmission,
+  initMockAgentData,
 } from "@/lib/mock/agent-submissions";
 import { MOCK_ACTIVITIES } from "@/lib/mock/activities";
 import { MOCK_ESSAYS } from "@/lib/mock/essays";
@@ -53,6 +54,9 @@ import {
   Upload,
   MessageSquare,
   Eye,
+  FileText,
+  Copy,
+  ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -73,11 +77,16 @@ export default function AdminAgentSubmissionsPage() {
   const [userVisibleNote, setUserVisibleNote] = useState("");
   const [screenshotType, setScreenshotType] = useState<ScreenshotType>("email_sent");
 
+  // 代投信息预览弹窗状态
+  const [showEssayDialog, setShowEssayDialog] = useState(false);
+  const [previewingTask, setPreviewingTask] = useState<AgentSubmissionTask | null>(null);
+
   // 检查是否为运营身份
   const isOperator = currentIdentity?.identityType === "operator" || currentIdentity?.identityType === "admin";
 
   // 加载数据
   useEffect(() => {
+    initMockAgentData();
     if (isAuthenticated()) {
       const data = getMockAllAgentSubmissions();
       setTasks(data);
@@ -161,6 +170,36 @@ export default function AdminAgentSubmissionsPage() {
     if (!currentIdentity) return;
     acceptMockAgentSubmission(taskId, currentIdentity.id);
     setRefreshKey(k => k + 1);
+  };
+
+  // 预览代投信息
+  const handlePreviewEssay = (task: AgentSubmissionTask) => {
+    setPreviewingTask(task);
+    setShowEssayDialog(true);
+  };
+
+  // 复制作文内容
+  const handleCopyEssay = () => {
+    if (!previewingTask) return;
+    const essay = MOCK_ESSAYS.find(e => e.id === previewingTask.essayId);
+    if (essay) {
+      const text = `【${essay.title}】\n\n${essay.content}`;
+      navigator.clipboard.writeText(text).then(() => {
+        alert("作文内容已复制到剪贴板");
+      });
+    }
+  };
+
+  // 复制作者资料
+  const handleCopyStudent = () => {
+    if (!previewingTask) return;
+    const student = MOCK_STUDENTS.find(s => s.id === previewingTask.studentId);
+    if (student) {
+      const text = `姓名：${student.studentName}\n学校：${student.school || ""}\n年级：${student.grade ? student.grade + "年级" : ""}\n联系电话：${student.parentPhone || ""}\n指导老师：${student.guideTeacher || ""}\n通讯地址：${student.address || ""}`;
+      navigator.clipboard.writeText(text).then(() => {
+        alert("作者资料已复制到剪贴板");
+      });
+    }
   };
 
   // 计算统计数据
@@ -320,22 +359,35 @@ export default function AdminAgentSubmissionsPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleAction(task, "status")}
+                            onClick={() => handlePreviewEssay(task)}
                           >
-                            更新状态
+                            <FileText className="h-4 w-4 mr-1" />
+                            代投信息
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => handleAction(task, "screenshot")}
                           >
-                            上传截图
+                            <Upload className="h-4 w-4 mr-1" />
+                            截图
                           </Button>
+                          {task.backendStatus !== "waiting_assign" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleAction(task, "status")}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              状态
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => handleAction(task, "note")}
                           >
+                            <MessageSquare className="h-4 w-4 mr-1" />
                             备注
                           </Button>
                         </div>
@@ -498,6 +550,115 @@ export default function AdminAgentSubmissionsPage() {
             </Button>
             <Button onClick={confirmAction}>
               确认
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 代投信息预览弹窗 */}
+      <Dialog open={showEssayDialog} onOpenChange={setShowEssayDialog}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">
+              {previewingTask ? MOCK_ESSAYS.find(e => e.id === previewingTask.essayId)?.title || "代投信息预览" : "代投信息预览"}
+            </DialogTitle>
+          </DialogHeader>
+
+          {previewingTask && (() => {
+            const essay = MOCK_ESSAYS.find(e => e.id === previewingTask.essayId);
+            const student = MOCK_STUDENTS.find(s => s.id === previewingTask.studentId);
+            const activity = MOCK_ACTIVITIES.find(a => a.id === previewingTask.activityId);
+
+            return (
+              <div className="space-y-4 py-4">
+                {/* 作者资料 */}
+                <div className="relative p-4 bg-green-50 rounded-lg">
+                  <div className="absolute top-2 right-2">
+                    <Button variant="outline" size="sm" onClick={handleCopyStudent} className="bg-white">
+                      <Copy className="h-4 w-4 mr-1" />
+                      复制资料
+                    </Button>
+                  </div>
+                  <div className="text-sm font-medium text-green-800 mb-3 flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    作者资料
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-green-600">姓名：</span>
+                      <span className="text-green-800 font-medium">{student?.studentName || "未知"}</span>
+                    </div>
+                    <div>
+                      <span className="text-green-600">学校：</span>
+                      <span className="text-green-800">{student?.school || "未知"}</span>
+                    </div>
+                    <div>
+                      <span className="text-green-600">年级：</span>
+                      <span className="text-green-800">{student?.grade ? `${student.grade}年级` : "未知"}</span>
+                    </div>
+                    <div>
+                      <span className="text-green-600">联系电话：</span>
+                      <span className="text-green-800">{student?.parentPhone || "未知"}</span>
+                    </div>
+                    <div>
+                      <span className="text-green-600">指导老师：</span>
+                      <span className="text-green-800">{student?.guideTeacher || "未知"}</span>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="text-green-600">通讯地址：</span>
+                      <span className="text-green-800">{student?.address || "未知"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 作文正文 - 带复制按钮 */}
+                <div className="relative">
+                  <div className="absolute top-2 right-2 z-10">
+                    <Button variant="outline" size="sm" onClick={handleCopyEssay} className="bg-white">
+                      <Copy className="h-4 w-4 mr-1" />
+                      复制全文
+                    </Button>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-lg border whitespace-pre-wrap text-sm leading-relaxed max-h-[300px] overflow-y-auto">
+                    {essay?.content || "暂无内容"}
+                  </div>
+                </div>
+
+                {/* 目标活动信息 */}
+                {activity && (
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm font-medium text-blue-800 flex items-center gap-2">
+                        <BookOpen className="h-4 w-4" />
+                        目标活动
+                      </div>
+                      <Link href={`/activities/${activity.id}`}>
+                        <Button variant="outline" size="sm" className="bg-white">
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          查看详情
+                        </Button>
+                      </Link>
+                    </div>
+                    <div className="text-blue-700 font-medium">{activity.title}</div>
+                    {activity.submissionEmail && (
+                      <div className="text-sm text-blue-600 mt-1">
+                        投稿邮箱：{activity.submissionEmail}
+                      </div>
+                    )}
+                    {activity.emailSubjectFormat && (
+                      <div className="text-sm text-blue-600">
+                        邮件主题格式：{activity.emailSubjectFormat}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEssayDialog(false)}>
+              关闭
             </Button>
           </DialogFooter>
         </DialogContent>

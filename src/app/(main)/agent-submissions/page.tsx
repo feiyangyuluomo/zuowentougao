@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/common";
 import { PaywallBlock } from "@/components/common";
 import { useAuthStore } from "@/stores";
-import { getMockAgentSubmissionsByIdentity, AGENT_SUBMISSION_FRONTEND_STATUSES } from "@/lib/mock/agent-submissions";
+import { getMockAgentSubmissionsByIdentity, AGENT_SUBMISSION_FRONTEND_STATUSES, initMockAgentData } from "@/lib/mock/agent-submissions";
 import { AgentSubmissionCard } from "@/components/agent/AgentSubmissionCard";
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
@@ -24,6 +24,7 @@ export default function AgentSubmissionsPage() {
 
   // 加载数据
   useEffect(() => {
+    initMockAgentData();
     if (isAuthenticated() && currentIdentity) {
       const data = getMockAgentSubmissionsByIdentity(currentIdentity.id);
       setSubmissions(data);

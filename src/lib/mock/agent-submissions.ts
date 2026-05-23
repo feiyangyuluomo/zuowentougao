@@ -386,7 +386,6 @@ export function createMockAgentSubmission(
   };
 
   agentSubmissionsStore.push(newTask);
-  persistMockAgentData();
 
   // 添加日志
   const log: AgentSubmissionLog = {
@@ -403,6 +402,7 @@ export function createMockAgentSubmission(
   };
   logsStore.push(log);
 
+  persistMockAgentData();
   return newTask;
 }
 
@@ -452,6 +452,14 @@ export function updateMockAgentSubmissionBackendStatus(
   const task = agentSubmissionsStore.find((t) => t.id === taskId);
   if (!task) return null;
 
+  task.backendStatus = backendStatus;
+  task.frontendStatus = frontendStatus;
+  task.operatorIdentityId = operatorId;
+  if (userVisibleNote) {
+    task.userVisibleNote = userVisibleNote;
+  }
+  task.updatedAt = new Date();
+
   const log: AgentSubmissionLog = {
     id: `log-${Date.now()}`,
     taskId: taskId,
@@ -466,14 +474,6 @@ export function updateMockAgentSubmissionBackendStatus(
   };
   logsStore.push(log);
   persistMockAgentData();
-
-  task.backendStatus = backendStatus;
-  task.frontendStatus = frontendStatus;
-  task.operatorIdentityId = operatorId;
-  if (userVisibleNote) {
-    task.userVisibleNote = userVisibleNote;
-  }
-  task.updatedAt = new Date();
 
   return task;
 }
@@ -502,17 +502,36 @@ export function uploadMockSubmissionScreenshot(
 }
 
 /**
- * 运营接单
+ * 运营接单 - 快速模式：接单后直接完成投稿
  */
 export function acceptMockAgentSubmission(taskId: string, operatorId: string): AgentSubmissionTask | null {
-  return updateMockAgentSubmissionBackendStatus(
-    taskId,
-    "assigned",
-    "pending",
-    operatorId,
-    "运营接单",
-    undefined
-  );
+  const task = agentSubmissionsStore.find((t) => t.id === taskId);
+  if (!task) return null;
+
+  // 直接更新为已投稿状态（运营已审核作文并直接完成投递）
+  task.backendStatus = "submitted";
+  task.frontendStatus = "submitted";
+  task.operatorIdentityId = operatorId;
+  task.submissionTime = new Date();
+  task.updatedAt = new Date();
+
+  // 记录日志
+  const log: AgentSubmissionLog = {
+    id: `log-${Date.now()}`,
+    taskId: taskId,
+    operatorIdentityId: operatorId,
+    oldFrontendStatus: task.frontendStatus,
+    newFrontendStatus: "submitted",
+    oldBackendStatus: task.backendStatus,
+    newBackendStatus: "submitted",
+    note: "运营接单并完成投稿",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  logsStore.push(log);
+
+  persistMockAgentData();
+  return task;
 }
 
 /**

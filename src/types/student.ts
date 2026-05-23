@@ -17,6 +17,8 @@ export interface Student extends Timestamps {
   avatar?: string;
   phone?: string;
   parentPhone?: string;
+  guideTeacher?: string;    // 指导老师
+  address?: string;         // 通讯地址
   birthday?: Date;
   status: AccountStatus;
 }
