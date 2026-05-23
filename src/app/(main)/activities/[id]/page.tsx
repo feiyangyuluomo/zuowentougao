@@ -1,52 +1,25 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import { LoadingState } from "@/components/common";
-import { PaywallBlock } from "@/components/common";
-import { getMockActivityById } from "@/lib/mock";
-import { ACTIVITY_STATUS, SUBMISSION_METHOD } from "@/constants";
-import { GRADE_LABELS } from "@/constants";
-import {
-  Calendar,
-  Award,
-  Mail,
-  FileText,
-  Share2,
-  Bookmark,
-  Star,
-  Clock,
-  Globe,
-  Printer,
-  Sparkles,
-  Send,
-} from "lucide-react";
 import Link from "next/link";
-
-// TODO: Replace with actual auth check
-const mockIsLoggedIn = false;
-const mockIsMember = false;
+import { useAuthStore } from "@/stores";
+import { ActivityDetailPanel } from "@/components/activities/ActivityDetailPanel";
+import { SubmissionMethodCard } from "@/components/activities/SubmissionMethodCard";
+import { LoadingState } from "@/components/common";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { getMockActivityById } from "@/lib/mock";
+import { canViewSubmissionEmail } from "@/lib/permissions/activity";
+import { ArrowLeft, Bookmark, Share2, Lock, Send, Sparkles } from "lucide-react";
 
 export default function ActivityDetailPage() {
   const params = useParams();
   const activityId = params.id as string;
+  const { isAuthenticated, currentIdentity, entitlements } = useAuthStore();
 
-  // Simulate loading
-  const isLoading = false;
   const activity = getMockActivityById(activityId);
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <LoadingState variant="detail" />
-      </div>
-    );
-  }
+  const canViewEmail = canViewSubmissionEmail(currentIdentity, entitlements);
 
   if (!activity) {
     return (
@@ -65,239 +38,98 @@ export default function ActivityDetailPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumb */}
-      <div className="text-sm text-gray-500 mb-6">
-        <Link href="/activities" className="hover:text-primary">
-          活动库
-        </Link>
-        <span className="mx-2">/</span>
-        <span>{activity.title}</span>
+      <div className="flex items-center justify-between mb-6">
+        <div className="text-sm text-gray-500">
+          <Link href="/activities" className="hover:text-primary flex items-center gap-1">
+            <ArrowLeft className="h-4 w-4" />
+            返回活动库
+          </Link>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="icon" className="h-9 w-9">
+            <Bookmark className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="icon" className="h-9 w-9">
+            <Share2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Header Card */}
+          {/* Header */}
           <Card>
-            <CardHeader>
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <Badge
-                      variant={
-                        activity.activityStatus === "recruiting"
-                          ? "success"
-                          : activity.activityStatus === "closing_soon"
-                          ? "warning"
-                          : "secondary"
-                      }
-                    >
-                      {ACTIVITY_STATUS[activity.activityStatus]?.label}
-                    </Badge>
-                    {activity.hasPayment && (
-                      <Badge variant="info">有稿费</Badge>
-                    )}
-                    {activity.hasCertificate && (
-                      <Badge variant="info">有证书</Badge>
-                    )}
-                    {activity.hasSampleIssue && (
-                      <Badge variant="info">有样刊</Badge>
-                    )}
-                  </div>
-                  <CardTitle className="text-2xl mb-2">
-                    {activity.title}
-                  </CardTitle>
-                  <CardDescription>
-                    {activity.publisher?.name} | 发布于{" "}
-                    {new Date(activity.createdAt).toLocaleDateString("zh-CN")}
-                  </CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="icon">
-                    <Bookmark className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="icon">
-                    <Share2 className="h-4 w-4" />
-                  </Button>
-                </div>
+            <CardContent className="pt-6">
+              <div className="flex flex-wrap gap-2 mb-3">
+                {activity.activityStatus === "recruiting" && (
+                  <Badge className="bg-green-600">征稿中</Badge>
+                )}
+                {activity.activityStatus === "closing_soon" && (
+                  <Badge className="bg-amber-500">即将截止</Badge>
+                )}
+                {activity.activityStatus === "long_term" && (
+                  <Badge variant="outline" className="border-blue-500 text-blue-600">长期征稿</Badge>
+                )}
+                {activity.hasPayment && (
+                  <Badge variant="secondary">有稿费</Badge>
+                )}
+                {activity.hasCertificate && (
+                  <Badge variant="secondary">有证书</Badge>
+                )}
+                {activity.hasSampleIssue && (
+                  <Badge variant="secondary">有样刊</Badge>
+                )}
               </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">{activity.publicSummary}</p>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                {activity.title}
+              </h1>
+              <p className="text-gray-500">
+                {activity.publisher?.name} | 发布于{" "}
+                {new Date(activity.createdAt).toLocaleDateString("zh-CN")}
+              </p>
             </CardContent>
           </Card>
 
-          {/* Tabs */}
-          <Tabs defaultValue="details">
-            <TabsList>
-              <TabsTrigger value="details">活动详情</TabsTrigger>
-              <TabsTrigger value="submission">投稿方式</TabsTrigger>
-              <TabsTrigger value="advice">AI建议</TabsTrigger>
-            </TabsList>
+          {/* Activity Detail Panel */}
+          <ActivityDetailPanel activity={activity} />
 
-            <TabsContent value="details" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>活动详情</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Basic Info */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <div className="text-sm text-gray-500 mb-1">适合年级</div>
-                      <div className="flex flex-wrap gap-1">
-                        {activity.gradeScope.map((grade) => (
-                          <Badge key={grade} variant="outline">
-                            {GRADE_LABELS[grade] || grade}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500 mb-1">截止时间</div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4 text-gray-400" />
-                        {activity.isLongTerm
-                          ? "长期征稿"
-                          : activity.deadline
-                          ? new Date(activity.deadline).toLocaleDateString("zh-CN")
-                          : "未设置"}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500 mb-1">投稿方式</div>
-                      <div className="flex items-center gap-1">
-                        <Mail className="h-4 w-4 text-gray-400" />
-                        {activity.submissionMethod
-                          ? SUBMISSION_METHOD[activity.submissionMethod]?.label
-                          : "未设置"}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500 mb-1">活动状态</div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4 text-gray-400" />
-                        {ACTIVITY_STATUS[activity.activityStatus]?.label}
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  {/* Original Detail */}
-                  <div>
-                    <h3 className="font-semibold mb-3">征稿原文</h3>
-                    <div className="prose prose-sm max-w-none text-gray-600 whitespace-pre-wrap">
-                      {activity.originalDetail}
-                    </div>
-                  </div>
-
-                  {/* Theme Tags */}
-                  {activity.themeTags && activity.themeTags.length > 0 && (
-                    <>
-                      <Separator />
-                      <div>
-                        <h3 className="font-semibold mb-3">主题标签</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {activity.themeTags.map((tag) => (
-                            <Badge key={tag} variant="secondary">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="submission" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>投稿方式</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {activity.submissionMethod && (
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-                        <Mail className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium">
-                          {SUBMISSION_METHOD[activity.submissionMethod]?.label}
-                        </h4>
-                        <p className="text-sm text-gray-500">
-                          {activity.submissionFormat || "请按照活动要求格式投稿"}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {activity.submissionEmail && (
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
-                        <Mail className="h-5 w-5 text-green-600" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium">投稿邮箱</h4>
-                        <p className="text-sm text-gray-500">{activity.submissionEmail}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {activity.emailSubjectFormat && (
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
-                        <FileText className="h-5 w-5 text-purple-600" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium">邮件标题格式</h4>
-                        <p className="text-sm text-gray-500">
-                          {activity.emailSubjectFormat}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="advice" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                    AI投稿建议
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {mockIsLoggedIn ? (
-                    <div className="space-y-4">
-                      <p className="text-gray-600">
-                        AI将根据这篇作文的特点，为您提供个性化的投稿建议。
-                      </p>
-                      <Link href={`/ai-assistant?activity=${activity.id}`}>
-                        <Button className="gap-2">
-                          <Sparkles className="h-4 w-4" />
-                          获取AI建议
-                        </Button>
-                      </Link>
-                    </div>
-                  ) : (
-                    <PaywallBlock
-                      title="登录后获取AI建议"
-                      description="AI将分析您的作文内容，给出最适合的投稿建议"
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+          {/* AI Advice Card - Only for members */}
+          {isAuthenticated() && canViewEmail && (
+            <Card className="border-purple-200 bg-purple-50/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-purple-800">
+                  <Sparkles className="h-5 w-5" />
+                  AI投稿建议
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-purple-800">
+                <div className="flex items-start gap-2">
+                  <span className="text-purple-600">1.</span>
+                  <span>建议在截止日期前3天完成投稿，避免意外情况</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-purple-600">2.</span>
+                  <span>投稿前请仔细检查邮件主题格式，确保格式正确</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-purple-600">3.</span>
+                  <span>建议留存投稿截图，以便后续跟踪投稿状态</span>
+                </div>
+                <Link href={`/ai-assistant?activity=${activity.id}`}>
+                  <Button variant="outline" className="mt-2 border-purple-300 text-purple-700 hover:bg-purple-100">
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    获取更详细的AI分析
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Action Card */}
+          {/* Submission Action */}
           <Card>
             <CardHeader>
               <CardTitle>投稿操作</CardTitle>
@@ -305,25 +137,45 @@ export default function ActivityDetailPage() {
             <CardContent className="space-y-4">
               {activity.supportSelfSubmission && (
                 <Link href={`/self-submissions/new?activity=${activity.id}`}>
-                  <Button className="w-full gap-2">
+                  <Button className="w-full gap-2 bg-primary hover:bg-primary/90">
                     <Send className="h-4 w-4" />
                     自主投稿
                   </Button>
                 </Link>
               )}
-              {activity.supportAgentSubmission && (
-                <Link href={`/agent-submissions/new?activity=${activity.id}`}>
+              {!isAuthenticated() ? (
+                <Link href="/login">
                   <Button variant="outline" className="w-full gap-2">
-                    <Star className="h-4 w-4" />
-                    申请平台代投
+                    <Lock className="h-4 w-4" />
+                    登录后查看投稿方式
                   </Button>
                 </Link>
+              ) : !canViewEmail ? (
+                <Link href="/membership">
+                  <Button variant="outline" className="w-full gap-2">
+                    <Lock className="h-4 w-4" />
+                    开通会员查看完整方式
+                  </Button>
+                </Link>
+              ) : (
+                activity.supportAgentSubmission && (
+                  <Button variant="outline" className="w-full gap-2 opacity-60" disabled>
+                    平台代投（即将上线）
+                  </Button>
+                )
               )}
-              <Button variant="ghost" className="w-full">
-                收藏活动
-              </Button>
             </CardContent>
           </Card>
+
+          {/* Submission Method - Only for members */}
+          {canViewEmail && activity.submissionEmail && (
+            <SubmissionMethodCard
+              email={activity.submissionEmail}
+              method={activity.submissionMethod}
+              format={activity.submissionFormat}
+              emailSubjectFormat={activity.emailSubjectFormat}
+            />
+          )}
 
           {/* Publisher Info */}
           <Card>
@@ -332,29 +184,21 @@ export default function ActivityDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center">
-                  {activity.publisher?.name?.charAt(0)}
+                <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center text-lg font-semibold">
+                  {activity.publisher?.name?.charAt(0) || "?"}
                 </div>
                 <div>
                   <div className="font-medium">
-                    {activity.publisher?.name}
+                    {activity.publisher?.name || "未知"}
                   </div>
                   <div className="text-sm text-gray-500">
-                    {activity.publisher?.publisherType}
+                    {activity.publisher?.publisherType === "magazine" && "杂志社"}
+                    {activity.publisher?.publisherType === "newspaper" && "报社"}
+                    {activity.publisher?.publisherType === "official_account" && "公众号"}
+                    {activity.publisher?.publisherType === "organization" && "机构"}
                   </div>
                 </div>
               </div>
-              {activity.sourceUrl && (
-                <a
-                  href={activity.sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 mt-4 text-sm text-primary hover:underline"
-                >
-                  <Globe className="h-4 w-4" />
-                  访问原始页面
-                </a>
-              )}
             </CardContent>
           </Card>
 
@@ -365,13 +209,13 @@ export default function ActivityDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
-                <div className="text-center">
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <div className="text-2xl font-bold text-primary">
                     {activity.views || 0}
                   </div>
                   <div className="text-sm text-gray-500">浏览次数</div>
                 </div>
-                <div className="text-center">
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <div className="text-2xl font-bold text-primary">
                     {activity.submissions || 0}
                   </div>
@@ -383,18 +227,5 @@ export default function ActivityDetailPage() {
         </div>
       </div>
     </div>
-  );
-}
-
-// Need to import Separator
-function Separator({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={`shrink-0 bg-border h-[1px] w-full my-6 ${className || ""}`}
-      {...props}
-    />
   );
 }

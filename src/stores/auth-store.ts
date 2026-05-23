@@ -1,5 +1,5 @@
 // ============================================================================
-// 认证状态管理
+// 认证状态管理 - Phase 1 自主投稿闭环
 // ============================================================================
 
 import { create } from "zustand";
@@ -12,31 +12,81 @@ import type {
   AuthState,
 } from "@/types";
 
-// TODO: Replace with actual API calls
+// ============================================================================
+// Mock 权益数据
+// ============================================================================
+
+// 模拟会员权益
+const MOCK_ENTITLEMENTS: Entitlement[] = [
+  {
+    id: "ent-001",
+    identityId: "id-001",
+    entitlementType: "view_activity_detail",
+    gradeScope: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+    expiredAt: new Date("2026-12-31"),
+  },
+  {
+    id: "ent-002",
+    identityId: "id-001",
+    entitlementType: "view_submission_email",
+    gradeScope: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+    expiredAt: new Date("2026-12-31"),
+  },
+  {
+    id: "ent-003",
+    identityId: "id-001",
+    entitlementType: "ai_rewrite",
+    aiQuota: 10,
+    expiredAt: new Date("2026-12-31"),
+  },
+  {
+    id: "ent-004",
+    identityId: "id-001",
+    entitlementType: "ai_recommend",
+    aiQuota: 20,
+    expiredAt: new Date("2026-12-31"),
+  },
+];
+
+// 模拟会员信息
+const MOCK_MEMBERSHIP: Membership = {
+  id: "mem-001",
+  identityId: "id-001",
+  membershipType: "yearly",
+  gradeScope: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+  validFrom: new Date("2025-01-01"),
+  validTo: new Date("2026-12-31"),
+  isLifetime: false,
+  status: "active",
+};
+
+// 游客权益（无权益）
+const EMPTY_ENTITLEMENTS: Entitlement[] = [];
 
 interface AuthStore extends AuthState {
+  // Data
+  entitlements: Entitlement[];
+  membership: Membership | null;
+
   // Actions
   login: (phone?: string, wxCode?: string) => Promise<void>;
+  loginAsGuest: () => void;
   logout: () => void;
   switchIdentity: (identityId: string) => void;
   refreshUser: () => Promise<void>;
-  refreshEntitlements: () => Promise<void>;
-  refreshMembership: () => Promise<void>;
 
   // Setters
   setUser: (user: User | null) => void;
   setIdentities: (identities: UserIdentity[]) => void;
   setCurrentIdentity: (identity: UserIdentity | null) => void;
-  setEntitlements: (entitlements: Entitlement[]) => void;
-  setMembership: (membership: Membership | null) => void;
   setLoading: (loading: boolean) => void;
 
   // Selectors / Computed
   isAuthenticated: () => boolean;
   isMember: () => boolean;
-  canUseAIRewrite: () => boolean;
-  canUseAIRecommend: () => boolean;
-  canViewFullActivity: () => boolean;
+  hasEntitlement: (type: Entitlement["entitlementType"]) => boolean;
+  getEntitlements: () => Entitlement[];
+  getMembership: () => Membership | null;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -46,6 +96,8 @@ export const useAuthStore = create<AuthStore>()(
       user: null,
       currentIdentity: null,
       identities: [],
+      entitlements: [],
+      membership: null,
       isAuthenticated: false,
       isLoading: false,
 
@@ -53,36 +105,23 @@ export const useAuthStore = create<AuthStore>()(
       login: async (phone?: string, wxCode?: string) => {
         set({ isLoading: true });
         try {
-          // TODO: Implement actual login logic
-          // 1. Call API to login with phone or wxCode
-          // 2. Get user info
-          // 3. Get identities
-          // 4. Set default identity
-
-          // Mock login for now
+          // Mock 登录成功
           const mockUser: User = {
             id: "user-001",
-            nickname: "测试用户",
+            nickname: "小明同学",
             phone: phone || "13800138000",
+            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=user-001",
             status: "active",
             createdAt: new Date(),
             updatedAt: new Date(),
           };
 
+          // 模拟会员身份
           const mockIdentities: UserIdentity[] = [
             {
               id: "id-001",
               userId: mockUser.id,
               identityType: "parent",
-              status: "active",
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            },
-            {
-              id: "id-002",
-              userId: mockUser.id,
-              identityType: "teacher",
-              organizationId: "org-001",
               status: "active",
               createdAt: new Date(),
               updatedAt: new Date(),
@@ -93,6 +132,8 @@ export const useAuthStore = create<AuthStore>()(
             user: mockUser,
             identities: mockIdentities,
             currentIdentity: mockIdentities[0],
+            entitlements: MOCK_ENTITLEMENTS,
+            membership: MOCK_MEMBERSHIP,
             isAuthenticated: true,
             isLoading: false,
           });
@@ -103,11 +144,26 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
+      // 游客模式（不登录但可浏览部分内容）
+      loginAsGuest: () => {
+        set({
+          user: null,
+          currentIdentity: null,
+          identities: [],
+          entitlements: EMPTY_ENTITLEMENTS,
+          membership: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
+      },
+
       logout: () => {
         set({
           user: null,
           currentIdentity: null,
           identities: [],
+          entitlements: [],
+          membership: null,
           isAuthenticated: false,
         });
       },
@@ -117,52 +173,37 @@ export const useAuthStore = create<AuthStore>()(
         const newIdentity = identities.find((i) => i.id === identityId);
         if (newIdentity) {
           set({ currentIdentity: newIdentity });
-          // TODO: Refresh entitlements and membership for new identity
+          // TODO: 刷新新身份的权益和会员信息
         }
       },
 
       refreshUser: async () => {
-        // TODO: Fetch latest user info
-      },
-
-      refreshEntitlements: async () => {
-        // TODO: Fetch entitlements for current identity
-      },
-
-      refreshMembership: async () => {
-        // TODO: Fetch membership for current identity
+        // TODO: 获取最新用户信息
       },
 
       // Setters
       setUser: (user) => set({ user }),
       setIdentities: (identities) => set({ identities }),
       setCurrentIdentity: (identity) => set({ currentIdentity: identity }),
-      setEntitlements: () => {
-        // TODO: Store entitlements
-      },
-      setMembership: () => {
-        // TODO: Store membership
-      },
       setLoading: (isLoading) => set({ isLoading }),
 
       // Selectors / Computed
       isAuthenticated: () => get().isAuthenticated,
+
       isMember: () => {
-        // TODO: Check if current identity has valid membership
-        return false;
+        const { membership } = get();
+        if (!membership) return false;
+        return membership.status === "active" && new Date(membership.validTo) > new Date();
       },
-      canUseAIRewrite: () => {
-        // TODO: Check entitlements
-        return true;
+
+      hasEntitlement: (type: Entitlement["entitlementType"]) => {
+        const { entitlements } = get();
+        return entitlements.some((e) => e.entitlementType === type);
       },
-      canUseAIRecommend: () => {
-        // TODO: Check entitlements
-        return true;
-      },
-      canViewFullActivity: () => {
-        // TODO: Check if can view full activity details
-        return true;
-      },
+
+      getEntitlements: () => get().entitlements,
+
+      getMembership: () => get().membership,
     }),
     {
       name: "auth-storage",
@@ -171,6 +212,8 @@ export const useAuthStore = create<AuthStore>()(
         identities: state.identities,
         currentIdentity: state.currentIdentity,
         isAuthenticated: state.isAuthenticated,
+        entitlements: state.entitlements,
+        membership: state.membership,
       }),
     }
   )

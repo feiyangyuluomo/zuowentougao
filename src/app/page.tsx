@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useAuthStore } from "@/stores";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,16 +9,17 @@ import {
   Sparkles,
   BookOpen,
   Send,
-  Users,
   FileText,
-  Clock,
   Award,
   TrendingUp,
   ArrowRight,
   Star,
+  Lock,
 } from "lucide-react";
 
 export default function HomePage() {
+  const { isAuthenticated, isMember } = useAuthStore();
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -41,7 +45,7 @@ export default function HomePage() {
                   浏览活动库
                 </Button>
               </Link>
-              <Link href="/ai-assistant">
+              <Link href={isAuthenticated() ? "/ai-assistant" : "/login"}>
                 <Button size="lg" variant="outline" className="gap-2">
                   <Sparkles className="h-5 w-5" />
                   AI投稿助手
@@ -89,7 +93,15 @@ export default function HomePage() {
             </Card>
 
             {/* AI投稿助手 */}
-            <Card className="border-2 hover:border-primary/30 transition-colors">
+            <Card className="border-2 hover:border-primary/30 transition-colors relative">
+              {!isMember() && (
+                <div className="absolute top-4 right-4">
+                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                    <Lock className="h-3 w-3 mr-1" />
+                    会员专享
+                  </Badge>
+                </div>
+              )}
               <CardHeader>
                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 mb-4">
                   <Sparkles className="h-6 w-6 text-purple-600" />
@@ -105,7 +117,7 @@ export default function HomePage() {
                   <Badge variant="secondary">活动推荐</Badge>
                   <Badge variant="secondary">投稿建议</Badge>
                 </div>
-                <Link href="/ai-assistant" className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all">
+                <Link href={isAuthenticated() ? "/ai-assistant" : "/login"} className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all">
                   立即体验 <ArrowRight className="h-4 w-4" />
                 </Link>
               </CardContent>
@@ -128,14 +140,14 @@ export default function HomePage() {
                   <Badge variant="secondary">自主操作</Badge>
                   <Badge variant="secondary">记录管理</Badge>
                 </div>
-                <Link href="/self-submissions" className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all">
+                <Link href={isAuthenticated() ? "/self-submissions" : "/login"} className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all">
                   查看记录 <ArrowRight className="h-4 w-4" />
                 </Link>
               </CardContent>
             </Card>
 
-            {/* 平台代投 */}
-            <Card className="border-2 hover:border-primary/30 transition-colors">
+            {/* 平台代投 (Phase 1 不做) */}
+            <Card className="border-2 hover:border-primary/30 transition-colors opacity-60">
               <CardHeader>
                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100 mb-4">
                   <TrendingUp className="h-6 w-6 text-orange-600" />
@@ -151,9 +163,7 @@ export default function HomePage() {
                   <Badge variant="secondary">进度跟踪</Badge>
                   <Badge variant="secondary">截图凭证</Badge>
                 </div>
-                <Link href="/agent-submissions" className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all">
-                  了解服务 <ArrowRight className="h-4 w-4" />
-                </Link>
+                <span className="text-gray-400 text-sm">即将上线</span>
               </CardContent>
             </Card>
 
@@ -174,7 +184,7 @@ export default function HomePage() {
                   <Badge variant="secondary">AI改稿</Badge>
                   <Badge variant="secondary">历史记录</Badge>
                 </div>
-                <Link href="/essays" className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all">
+                <Link href={isAuthenticated() ? "/essays" : "/login"} className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all">
                   管理作文 <ArrowRight className="h-4 w-4" />
                 </Link>
               </CardContent>
@@ -197,7 +207,7 @@ export default function HomePage() {
                   <Badge variant="secondary">获奖记录</Badge>
                   <Badge variant="secondary">时间线</Badge>
                 </div>
-                <Link href="/growth-records" className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all">
+                <Link href={isAuthenticated() ? "/growth-records" : "/login"} className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all">
                   查看档案 <ArrowRight className="h-4 w-4" />
                 </Link>
               </CardContent>
@@ -286,17 +296,35 @@ export default function HomePage() {
             立即注册，免费浏览活动库。开通会员，解锁完整投稿功能。
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/register">
-              <Button size="lg" className="bg-primary hover:bg-primary/90">
-                立即注册
-              </Button>
-            </Link>
-            <Link href="/membership">
-              <Button size="lg" variant="outline">
-                <Star className="h-4 w-4 mr-2" />
-                了解会员权益
-              </Button>
-            </Link>
+            {isAuthenticated() ? (
+              <>
+                <Link href="/activities">
+                  <Button size="lg" className="bg-primary hover:bg-primary/90">
+                    浏览活动
+                  </Button>
+                </Link>
+                <Link href="/ai-assistant">
+                  <Button size="lg" variant="outline">
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    AI投稿助手
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/register">
+                  <Button size="lg" className="bg-primary hover:bg-primary/90">
+                    立即注册
+                  </Button>
+                </Link>
+                <Link href="/membership">
+                  <Button size="lg" variant="outline">
+                    <Star className="h-4 w-4 mr-2" />
+                    了解会员权益
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>
