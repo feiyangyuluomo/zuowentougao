@@ -22,6 +22,7 @@ export default function AIAssistantPage() {
   const router = useRouter();
   const { isAuthenticated, isMember } = useAuthStore();
   const [grade, setGrade] = useState<string>("");
+  const [title, setTitle] = useState<string>("");
   const [content, setContent] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AIAnalysisOutput | null>(null);
@@ -77,10 +78,18 @@ export default function AIAssistantPage() {
     router.push(`/activities/${activityId}`);
   };
 
-  const handleSaveToEssays = (title: string) => {
+  const handleSaveToEssays = (dialogTitle: string) => {
+    // 优先使用用户输入的标题，否则使用弹窗传入的标题
+    const finalTitle = title.trim() || dialogTitle;
+    if (!finalTitle) {
+      alert("请输入作文标题");
+      return;
+    }
     // TODO: 调用保存作文的接口
-    console.log("保存作文:", title, content.slice(0, 100));
-    alert(`作文"${title}"已保存到"我的作文"中`);
+    console.log("保存作文:", finalTitle, content.slice(0, 100));
+    alert(`作文"${finalTitle}"已保存到"我的作文"中`);
+    // 清空标题
+    setTitle("");
   };
 
   return (
@@ -127,6 +136,17 @@ export default function AIAssistantPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Title Input */}
+                <div>
+                  <Label>作文标题（选填）</Label>
+                  <Input
+                    placeholder="请输入作文标题"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="mt-2"
+                  />
                 </div>
 
                 {/* Content Input */}
@@ -201,6 +221,7 @@ export default function AIAssistantPage() {
               isLoading={isAnalyzing}
               onStartRecommend={handleGetRecommendations}
               essayContent={content}
+              essayTitle={title}
               onSaveToEssays={handleSaveToEssays}
             />
 

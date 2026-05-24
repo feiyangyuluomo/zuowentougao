@@ -24,19 +24,33 @@ interface AIPromptSectionProps {
   isLoading?: boolean;
   onStartRecommend?: () => void;
   essayContent?: string;
+  essayTitle?: string;
   onSaveToEssays?: (title: string) => void;
 }
 
-export function AIPromptSection({ analysis, isLoading, onStartRecommend, essayContent, onSaveToEssays }: AIPromptSectionProps) {
+export function AIPromptSection({ analysis, isLoading, onStartRecommend, essayContent, essayTitle, onSaveToEssays }: AIPromptSectionProps) {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [essayTitle, setEssayTitle] = useState("");
+  const [dialogEssayTitle, setDialogEssayTitle] = useState("");
+
+  // 当弹窗打开时，如果已经有标题则预填
+  useState(() => {
+    if (essayTitle) {
+      setDialogEssayTitle(essayTitle);
+    }
+  });
 
   const handleSaveToEssays = () => {
-    if (essayTitle.trim() && onSaveToEssays) {
-      onSaveToEssays(essayTitle.trim());
+    const finalTitle = dialogEssayTitle.trim();
+    if (finalTitle && onSaveToEssays) {
+      onSaveToEssays(finalTitle);
       setShowSaveDialog(false);
-      setEssayTitle("");
+      setDialogEssayTitle("");
     }
+  };
+
+  const openSaveDialog = () => {
+    setDialogEssayTitle(essayTitle || "");
+    setShowSaveDialog(true);
   };
   if (isLoading) {
     return (
@@ -182,7 +196,7 @@ export function AIPromptSection({ analysis, isLoading, onStartRecommend, essayCo
         {onStartRecommend && (
           <div className="flex gap-2">
             <Button
-              onClick={() => setShowSaveDialog(true)}
+              onClick={openSaveDialog}
               variant="outline"
               className="flex-1 gap-2"
               disabled={!essayContent}
@@ -216,8 +230,8 @@ export function AIPromptSection({ analysis, isLoading, onStartRecommend, essayCo
                 <Input
                   id="essayTitle"
                   placeholder="请输入作文标题"
-                  value={essayTitle}
-                  onChange={(e) => setEssayTitle(e.target.value)}
+                  value={dialogEssayTitle}
+                  onChange={(e) => setDialogEssayTitle(e.target.value)}
                 />
               </div>
               {essayContent && (
@@ -231,7 +245,7 @@ export function AIPromptSection({ analysis, isLoading, onStartRecommend, essayCo
               <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
                 取消
               </Button>
-              <Button onClick={handleSaveToEssays} disabled={!essayTitle.trim()}>
+              <Button onClick={handleSaveToEssays} disabled={!dialogEssayTitle.trim()}>
                 保存
               </Button>
             </DialogFooter>
