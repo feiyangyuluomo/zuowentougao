@@ -105,88 +105,61 @@ export function ActivityDetailPanel({ activity }: ActivityDetailPanelProps) {
         </CardContent>
       </Card>
 
-      {/* 投稿方式 - 会员可见 */}
-      <Card className={!canViewEmail ? "opacity-60" : ""}>
+      {/* 其他补充 */}
+      <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Send className="h-5 w-5" />
-              投稿方式
-            </CardTitle>
-            {!canViewEmail && (
-              <Badge variant="outline" className="bg-amber-50 text-amber-700">
-                <Lock className="h-3 w-3 mr-1" />
-                会员专享
-              </Badge>
-            )}
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            其他补充
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {canViewEmail ? (
-            <>
-              {/* 投稿邮箱 */}
-              {activity.submissionEmail && (
-                <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
-                  <Mail className="h-5 w-5 text-blue-600" />
-                  <div>
-                    <div className="text-sm text-gray-500">投稿邮箱</div>
-                    <div className="font-semibold text-blue-700">{activity.submissionEmail}</div>
-                  </div>
-                </div>
-              )}
-
-              {/* 投稿方式 */}
-              {activity.submissionMethod && (
-                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-                  {activity.submissionMethod === "email" && <Mail className="h-5 w-5 text-gray-600" />}
-                  {activity.submissionMethod === "website" && <Globe className="h-5 w-5 text-gray-600" />}
-                  <div>
-                    <div className="text-sm text-gray-500">投稿方式</div>
-                    <div className="font-medium">
-                      {activity.submissionMethod === "email" && "邮箱投稿"}
-                      {activity.submissionMethod === "website" && "官网投稿"}
-                      {activity.submissionMethod === "mini_program" && "小程序投稿"}
-                      {activity.submissionMethod === "wechat" && "微信投稿"}
-                      {activity.submissionMethod === "system" && "系统投稿"}
-                      {activity.submissionMethod === "offline" && "线下投稿"}
-                      {activity.submissionMethod === "other" && "其他方式"}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* 投稿格式 */}
-              {activity.submissionFormat && (
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <div className="text-sm text-gray-500 mb-2">投稿格式要求</div>
-                  <div className="text-gray-700 whitespace-pre-wrap">
-                    {activity.submissionFormat}
-                  </div>
-                </div>
-              )}
-
-              {/* 邮件主题格式 */}
-              {activity.emailSubjectFormat && (
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <div className="text-sm text-gray-500 mb-2">邮件主题格式</div>
-                  <div className="font-mono text-sm text-gray-700">
-                    {activity.emailSubjectFormat}
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="text-center py-8">
-              <Lock className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 mb-4">
-                登录并开通会员后查看完整投稿方式
-              </p>
-              <Link href="/login">
-                <Button className="bg-primary hover:bg-primary/90">
-                  登录/开通会员
-                </Button>
-              </Link>
+          {/* 活动原文链接 */}
+          {activity.originalUrl && (
+            <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
+              <Globe className="h-5 w-5 text-blue-600" />
+              <div>
+                <div className="text-sm text-gray-500">活动原文链接</div>
+                <a
+                  href={activity.originalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-blue-700 hover:underline"
+                >
+                  {activity.originalUrl}
+                </a>
+              </div>
             </div>
+          )}
+
+          {/* 活动补充资料 */}
+          {activity.supplementMaterials && activity.supplementMaterials.length > 0 && (
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="text-sm text-gray-500 mb-2">活动补充资料</div>
+              <div className="space-y-2">
+                {activity.supplementMaterials.map((material, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-700">{material}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 活动写作建议 */}
+          {activity.writingSuggestions && (
+            <div className="p-4 bg-green-50 rounded-lg">
+              <div className="text-sm text-gray-500 mb-2">活动写作建议</div>
+              <div className="text-gray-700 whitespace-pre-wrap">
+                {activity.writingSuggestions}
+              </div>
+            </div>
+          )}
+
+          {/* 无补充时显示空状态 */}
+          {!activity.originalUrl && (!activity.supplementMaterials || activity.supplementMaterials.length === 0) && !activity.writingSuggestions && (
+            <p className="text-gray-500 text-center py-4">暂无其他补充信息</p>
           )}
         </CardContent>
       </Card>

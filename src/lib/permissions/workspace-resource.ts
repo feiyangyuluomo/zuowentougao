@@ -198,28 +198,24 @@ export function canAccessAgentSubmission(identity: UserIdentity | null, taskId: 
 
 /**
  * 检查是否可以访问个人订单页
+ * 只允许家长和个人老师
  * @param identity 当前身份
  */
 export function canAccessOrdersPage(identity: UserIdentity | null): boolean {
   if (!identity) return false;
 
-  // admin/operator 允许全部访问
-  if (isAdminOrOperator(identity)) return true;
-
   // 家长和个人老师可以访问
-  return isParentOrTeacher(identity) || isOrganizationAdmin(identity);
+  return isParentOrTeacher(identity);
 }
 
 /**
  * 检查是否可以访问机构订单页
+ * 只允许机构管理员且必须有 organizationId
  * @param identity 当前身份
  */
 export function canAccessOrganizationOrdersPage(identity: UserIdentity | null): boolean {
   if (!identity) return false;
 
-  // admin/operator 允许全部访问
-  if (isAdminOrOperator(identity)) return true;
-
-  // 仅机构管理员可以访问
-  return isOrganizationAdmin(identity);
+  // 仅机构管理员可以访问，且必须有所属机构
+  return isOrganizationAdmin(identity) && !!identity.organizationId;
 }

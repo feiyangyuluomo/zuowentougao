@@ -58,6 +58,9 @@ export interface Activity extends Timestamps {
   coverImage?: string;       // 封面图
   views?: number;            // 浏览量
   submissions?: number;      // 投稿数
+  originalUrl?: string;      // 活动原文链接
+  supplementMaterials?: string[]; // 活动补充资料
+  writingSuggestions?: string;   // 活动写作建议
 }
 
 // 活动筛选条件

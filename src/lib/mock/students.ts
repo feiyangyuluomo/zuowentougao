@@ -133,3 +133,53 @@ export function getMockStudentsByOwner(ownerIdentityId: string) {
 export function getMockStudentsByOrganization(organizationId: string) {
   return MOCK_STUDENTS.filter((s) => s.organizationId === organizationId);
 }
+
+// ============================================================================
+// 学生操作函数
+// ============================================================================
+
+// 内存中的学生列表
+let studentsStore: Student[] = [...MOCK_STUDENTS];
+
+/**
+ * 创建新学生
+ */
+export function createMockStudent(params: {
+  studentName: string;
+  ownerIdentityId: string;
+  school?: string;
+  classId?: string;
+  phone?: string;
+  guideTeacher?: string;
+  address?: string;
+}): Student {
+  const newStudent: Student = {
+    id: `stu-${Date.now()}`,
+    ownerIdentityId: params.ownerIdentityId,
+    organizationId: undefined,
+    classId: params.classId,
+    studentName: params.studentName,
+    school: params.school || undefined,
+    grade: undefined,
+    gender: undefined,
+    avatar: undefined,
+    phone: params.phone || undefined,
+    parentPhone: params.phone || undefined,
+    guideTeacher: params.guideTeacher || undefined,
+    address: params.address || undefined,
+    birthday: undefined,
+    status: "active",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  studentsStore.push(newStudent);
+  return newStudent;
+}
+
+/**
+ * 获取内存中的学生列表
+ */
+export function getStudentsStore(): Student[] {
+  return studentsStore;
+}

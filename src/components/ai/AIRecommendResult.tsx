@@ -3,6 +3,7 @@
 // ============================================================================
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,9 +14,26 @@ import { getMockActivityById } from "@/lib/mock";
 interface AIRecommendResultProps {
   recommendations: AIRecommendResult[];
   onSelectActivity?: (activityId: string) => void;
+  essayTitle?: string;
+  essayContent?: string;
 }
 
-export function AIRecommendResultList({ recommendations, onSelectActivity }: AIRecommendResultProps) {
+export function AIRecommendResultList({
+  recommendations,
+  onSelectActivity,
+  essayTitle = "",
+  essayContent = ""
+}: AIRecommendResultProps) {
+  const router = useRouter();
+
+  const handleAgentSubmission = (activityId: string) => {
+    // 构建URL参数：活动ID、作文标题、作文内容
+    const params = new URLSearchParams();
+    params.set("activity", activityId);
+    if (essayTitle) params.set("title", essayTitle);
+    if (essayContent) params.set("content", essayContent);
+    router.push(`/agent-submissions/new?${params.toString()}`);
+  };
   if (recommendations.length === 0) {
     return (
       <Card className="border-2 border-dashed border-gray-200">
@@ -123,16 +141,22 @@ export function AIRecommendResultList({ recommendations, onSelectActivity }: AIR
                     <ArrowRight className="h-3 w-3" />
                   </Button>
                 </Link>
-                {onSelectActivity && (
-                  <Button
-                    size="sm"
-                    className="gap-1 bg-primary hover:bg-primary/90"
-                    onClick={() => onSelectActivity(result.activityId)}
-                  >
-                    <Send className="h-3 w-3" />
-                    自主投稿
-                  </Button>
-                )}
+                <Button
+                  size="sm"
+                  className="gap-1 bg-primary hover:bg-primary/90"
+                  onClick={() => onSelectActivity?.(result.activityId)}
+                >
+                  <Send className="h-3 w-3" />
+                  自主投稿
+                </Button>
+                <Button
+                  size="sm"
+                  className="gap-1 bg-blue-600 hover:bg-blue-700"
+                  onClick={() => handleAgentSubmission(result.activityId)}
+                >
+                  <Send className="h-3 w-3" />
+                  平台代投
+                </Button>
               </div>
             </div>
           );

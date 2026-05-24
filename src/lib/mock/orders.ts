@@ -194,11 +194,12 @@ export function getOrdersByOrganizationId(organizationId: string): Order[] {
 
 /**
  * 根据 identityId 和 organizationId 获取机构订单
+ * 只有机构管理员可以查看机构订单
  */
 export function getOrganizationOrdersByIdentity(identity: UserIdentity): Order[] {
   if (!identity.organizationId) return [];
-  // 机构管理员和机构老师可以看到机构订单
-  if (!["organization_admin", "organization_teacher"].includes(identity.identityType)) return [];
+  // 仅机构管理员可以查看机构订单
+  if (identity.identityType !== "organization_admin") return [];
   return getOrdersByOrganizationId(identity.organizationId);
 }
 

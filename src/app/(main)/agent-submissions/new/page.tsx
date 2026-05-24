@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useAuthStore } from "@/stores";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,8 +15,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Check } from "lucide-react";
 import Link from "next/link";
 import { ArrowLeft, FileText, Send, Shield, Zap, AlertTriangle, User, LogIn, Plus, UserPlus } from "lucide-react";
-import { MOCK_STUDENTS } from "@/lib/mock/students";
-import { MOCK_ESSAYS } from "@/lib/mock/essays";
+import { MOCK_STUDENTS, createMockStudent } from "@/lib/mock/students";
+import { MOCK_ESSAYS, createMockEssay } from "@/lib/mock/essays";
+import { getMockActivityById } from "@/lib/mock";
 
 function PricingSection() {
   return (
@@ -92,11 +93,13 @@ function PricingSection() {
 function StudentSelectOrCreate({
   selectedStudentId,
   onSelect,
-  identityId,
+  students,
+  onCreateStudent,
 }: {
   selectedStudentId: string | null;
   onSelect: (id: string) => void;
-  identityId: string;
+  students: typeof MOCK_STUDENTS;
+  onCreateStudent: (data: { studentName: string; school?: string; className?: string; phone?: string; guideTeacher?: string; address?: string }) => void;
 }) {
   const [isCreating, setIsCreating] = useState(false);
   const [newStudent, setNewStudent] = useState({
@@ -108,12 +111,17 @@ function StudentSelectOrCreate({
     address: "",
   });
 
-  // 获取当前身份下的学生
-  const students = MOCK_STUDENTS.filter((s) => s.ownerIdentityId === identityId);
-
   const handleCreateStudent = () => {
-    // TODO: 创建学生逻辑
-    console.log("创建学生:", newStudent);
+    if (!newStudent.studentName) return;
+    onCreateStudent({
+      studentName: newStudent.studentName,
+      school: newStudent.school || undefined,
+      className: newStudent.className || undefined,
+      phone: newStudent.phone || undefined,
+      guideTeacher: newStudent.guideTeacher || undefined,
+      address: newStudent.address || undefined,
+    });
+    setNewStudent({ studentName: "", school: "", className: "", phone: "", guideTeacher: "", address: "" });
     setIsCreating(false);
   };
 
@@ -364,16 +372,52 @@ function EssaySelectOrCreate({
   );
 }
 
-function ApplicationFlow() {
+function ApplicationFlow({
+  activityId,
+  prefilledTitle,
+  prefilledContent,
+}: {
+  activityId: string | null;
+  prefilledTitle: string;
+  prefilledContent: string;
+}) {
   const [step, setStep] = useState(1);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedEssayId, setSelectedEssayId] = useState<string | null>(null);
   const [riskConfirmed, setRiskConfirmed] = useState(false);
   const { currentIdentity } = useAuthStore();
+  const [students, setStudents] = useState(MOCK_STUDENTS);
+  const [essays, setEssays] = useState(MOCK_ESSAYS);
 
-  // 获取用户的作文列表
+  // 如果有预填内容，自动创建作文
+  useEffect(() => {
+    if (prefilledTitle && prefilledContent && currentIdentity) {
+      // 检查是否已有相同标题的作文
+      const existing = essays.find(e => e.title === prefilledTitle && e.content === prefilledContent);
+      if (!existing) {
+        const newEssay = createMockEssay({
+          title: prefilledTitle,
+          content: prefilledContent,
+          grade: "",
+          ownerIdentityId: currentIdentity.id,
+        });
+        setEssays([...essays, newEssay]);
+        setSelectedEssayId(newEssay.id);
+      } else {
+        setSelectedEssayId(existing.id);
+      }
+    }
+  }, [prefilledTitle, prefilledContent, currentIdentity]);
+
+  // 获取当前身份下的学生
+  const ownerStudents = students.filter((s) => s.ownerIdentityId === currentIdentity?.id);
+
+  // 如果有预填的活动，显示活动信息
+  const activity = activityId ? getMockActivityById(activityId) : null;
+
+  // 筛选与活动匹配的学生作文
   const userEssays = currentIdentity
-    ? MOCK_ESSAYS.filter((e) => e.ownerIdentityId === currentIdentity.id)
+    ? essays.filter((e) => e.ownerIdentityId === currentIdentity.id)
     : [];
 
   const canProceedStep1 = selectedStudentId !== null;
@@ -392,7 +436,7 @@ function ApplicationFlow() {
     <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/activities">
+        <Link href={activityId ? "/ai-assistant" : "/activities"}>
           <Button variant="ghost" size="sm" className="gap-1">
             <ArrowLeft className="h-4 w-4" />
             返回
@@ -445,10 +489,23 @@ function ApplicationFlow() {
         <CardContent>
           {step === 1 && (
             <div className="space-y-4">
+              {activity && (
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="text-sm text-blue-600 font-medium mb-1">已选择活动</div>
+                  <div className="font-medium">{activity.title}</div>
+                  <div className="text-sm text-gray-500">{activity.publisher?.name}</div>
+                </div>
+              )}
               <StudentSelectOrCreate
                 selectedStudentId={selectedStudentId}
                 onSelect={setSelectedStudentId}
-                identityId={currentIdentity?.id || ""}
+                students={ownerStudents}
+                onCreateStudent={(data) => {
+                  if (!currentIdentity) return;
+                  const created = createMockStudent({ ...data, ownerIdentityId: currentIdentity.id });
+                  setStudents([...students, created]);
+                  setSelectedStudentId(created.id);
+                }}
               />
               <div className="flex justify-end pt-4">
                 <Button onClick={handleNext} disabled={!canProceedStep1}>
@@ -478,16 +535,22 @@ function ApplicationFlow() {
             <div className="space-y-4">
               {/* 已选信息确认 */}
               <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+                {activity && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">活动</span>
+                    <span className="font-medium">{activity.title}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-gray-600">学生</span>
                   <span className="font-medium">
-                    {MOCK_STUDENTS.find((s) => s.id === selectedStudentId)?.studentName || "-"}
+                    {students.find((s) => s.id === selectedStudentId)?.studentName || "-"}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">作文</span>
                   <span className="font-medium">
-                    {MOCK_ESSAYS.find((e) => e.id === selectedEssayId)?.title || "-"}
+                    {essays.find((e) => e.id === selectedEssayId)?.title || "-"}
                   </span>
                 </div>
               </div>
@@ -551,6 +614,10 @@ function ApplicationFlow() {
 
 function NewAgentSubmissionContent() {
   const { isAuthenticated } = useAuthStore();
+  const searchParams = useSearchParams();
+  const activityId = searchParams.get("activity");
+  const prefilledTitle = searchParams.get("title") || "";
+  const prefilledContent = searchParams.get("content") || "";
 
   // 未登录：展示价格引导
   if (!isAuthenticated()) {
@@ -564,7 +631,11 @@ function NewAgentSubmissionContent() {
   // 登录后：展示申请流程
   return (
     <div className="container mx-auto px-4 py-8">
-      <ApplicationFlow />
+      <ApplicationFlow
+        activityId={activityId}
+        prefilledTitle={prefilledTitle}
+        prefilledContent={prefilledContent}
+      />
     </div>
   );
 }

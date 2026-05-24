@@ -243,6 +243,8 @@ export default function AIAssistantPage() {
               <AIRecommendResultList
                 recommendations={recommendations}
                 onSelectActivity={handleSelectActivity}
+                essayTitle={title}
+                essayContent={content}
               />
             )}
 

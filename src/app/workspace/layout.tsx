@@ -91,12 +91,12 @@ const WORKSPACE_MENU = [
     icon: BarChart3,
     roles: ["teacher", "organization_admin", "organization_teacher"],
   },
-  // 我的订单 - 家长、个人老师、机构管理员
+  // 我的订单 - 家长、个人老师
   {
     title: "我的订单",
     href: "/workspace/orders",
     icon: Receipt,
-    roles: ["parent", "teacher", "organization_admin"],
+    roles: ["parent", "teacher"],
   },
   // 机构订单 - 仅机构管理员
   {
