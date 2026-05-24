@@ -4,6 +4,7 @@
 // ============================================================================
 
 import { USE_MOCK } from "@/server/config/data-source";
+import { prisma } from "@/server/db/prisma";
 import { MOCK_ORDERS, getOrdersByIdentityId, getOrdersByOrganizationId } from "@/lib/mock/orders";
 import type { OrderType, PaymentStatus } from "@prisma/client";
 
@@ -37,21 +38,67 @@ export class OrderRepository implements IOrderRepository {
     if (USE_MOCK) {
       return MOCK_ORDERS.find((o) => o.id === id) || null;
     }
-    return null;
+    const order = await prisma.order.findUnique({ where: { id } });
+    if (!order) return null;
+    return {
+      id: order.id,
+      identityId: order.identityId,
+      organizationId: order.organizationId ?? undefined,
+      orderType: order.orderType as OrderType,
+      orderTitle: order.orderTitle,
+      amount: order.amount,
+      paymentStatus: order.paymentStatus as PaymentStatus,
+      createdAt: order.createdAt,
+      paidAt: order.paidAt ?? undefined,
+      expiredAt: order.expiredAt ?? undefined,
+      relatedStudentName: order.relatedStudentName ?? undefined,
+      relatedEssayTitle: order.relatedEssayTitle ?? undefined,
+      remarks: order.remarks ?? undefined,
+    };
   }
 
   async findByIdentity(identityId: string): Promise<Order[]> {
     if (USE_MOCK) {
       return getOrdersByIdentityId(identityId);
     }
-    return [];
+    const orders = await prisma.order.findMany({ where: { identityId } });
+    return orders.map((o) => ({
+      id: o.id,
+      identityId: o.identityId,
+      organizationId: o.organizationId ?? undefined,
+      orderType: o.orderType as OrderType,
+      orderTitle: o.orderTitle,
+      amount: o.amount,
+      paymentStatus: o.paymentStatus as PaymentStatus,
+      createdAt: o.createdAt,
+      paidAt: o.paidAt ?? undefined,
+      expiredAt: o.expiredAt ?? undefined,
+      relatedStudentName: o.relatedStudentName ?? undefined,
+      relatedEssayTitle: o.relatedEssayTitle ?? undefined,
+      remarks: o.remarks ?? undefined,
+    }));
   }
 
   async findByOrganization(organizationId: string): Promise<Order[]> {
     if (USE_MOCK) {
       return getOrdersByOrganizationId(organizationId);
     }
-    return [];
+    const orders = await prisma.order.findMany({ where: { organizationId } });
+    return orders.map((o) => ({
+      id: o.id,
+      identityId: o.identityId,
+      organizationId: o.organizationId ?? undefined,
+      orderType: o.orderType as OrderType,
+      orderTitle: o.orderTitle,
+      amount: o.amount,
+      paymentStatus: o.paymentStatus as PaymentStatus,
+      createdAt: o.createdAt,
+      paidAt: o.paidAt ?? undefined,
+      expiredAt: o.expiredAt ?? undefined,
+      relatedStudentName: o.relatedStudentName ?? undefined,
+      relatedEssayTitle: o.relatedEssayTitle ?? undefined,
+      remarks: o.remarks ?? undefined,
+    }));
   }
 }
 

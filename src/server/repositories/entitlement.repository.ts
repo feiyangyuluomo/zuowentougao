@@ -3,8 +3,9 @@
 // 权益数据访问层 - 支持 mock/db 双模式
 // ============================================================================
 
-import type { Entitlement } from "@/types";
+import type { Entitlement, EntitlementType } from "@/types";
 import { USE_MOCK } from "@/server/config/data-source";
+import { prisma } from "@/server/db/prisma";
 import { getEntitlementsByIdentityId } from "@/lib/mock/entitlements";
 
 // Repository 接口
@@ -18,7 +19,15 @@ export class EntitlementRepository implements IEntitlementRepository {
     if (USE_MOCK) {
       return getEntitlementsByIdentityId(identityId);
     }
-    return [];
+    const entitlements = await prisma.entitlement.findMany({ where: { identityId } });
+    return entitlements.map((e) => ({
+      id: e.id,
+      identityId: e.identityId,
+      entitlementType: e.entitlementType as EntitlementType,
+      gradeScope: e.gradeScope,
+      aiQuota: e.aiQuota ?? undefined,
+      expiredAt: e.expiredAt,
+    }));
   }
 }
 

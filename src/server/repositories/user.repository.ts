@@ -3,8 +3,9 @@
 // 用户数据访问层 - 支持 mock/db 双模式
 // ============================================================================
 
-import type { User } from "@/types";
+import type { User, AccountStatus } from "@/types";
 import { USE_MOCK } from "@/server/config/data-source";
+import { prisma } from "@/server/db/prisma";
 
 // Mock 数据
 interface MockUser extends User {}
@@ -63,14 +64,40 @@ export interface IUserRepository {
   findByPhone(phone: string): Promise<User | null>;
 }
 
-// Repository 实现 - 当前仅支持 Mock
+// Repository 实现 - mock/db 双模式
 export class UserRepository implements IUserRepository {
   async findById(id: string): Promise<User | null> {
-    return mockUsersStore.find((u) => u.id === id) || null;
+    if (USE_MOCK) {
+      return mockUsersStore.find((u) => u.id === id) || null;
+    }
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return null;
+    return {
+      id: user.id,
+      nickname: user.nickname,
+      phone: user.phone,
+      avatar: user.avatar ?? undefined,
+      status: user.status as AccountStatus,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   }
 
   async findByPhone(phone: string): Promise<User | null> {
-    return mockUsersStore.find((u) => u.phone === phone) || null;
+    if (USE_MOCK) {
+      return mockUsersStore.find((u) => u.phone === phone) || null;
+    }
+    const user = await prisma.user.findUnique({ where: { phone } });
+    if (!user) return null;
+    return {
+      id: user.id,
+      nickname: user.nickname,
+      phone: user.phone,
+      avatar: user.avatar ?? undefined,
+      status: user.status as AccountStatus,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   }
 }
 

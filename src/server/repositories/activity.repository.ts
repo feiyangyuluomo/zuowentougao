@@ -4,8 +4,9 @@
 // ============================================================================
 
 import type { Activity, ActivityListItem } from "@/types";
-import { ActivityStatus } from "@prisma/client";
+import { ActivityStatus, AuditStatus, PublisherType } from "@prisma/client";
 import { USE_MOCK } from "@/server/config/data-source";
+import { prisma } from "@/server/db/prisma";
 import { MOCK_ACTIVITIES, filterMockActivities } from "@/lib/mock/activities";
 
 // Repository 接口
@@ -28,9 +29,49 @@ export class ActivityRepository implements IActivityRepository {
     if (USE_MOCK) {
       return MOCK_ACTIVITIES.find((a) => a.id === id) || null;
     }
-    // 当使用真实数据库时，返回 null 避免类型复杂问题
-    // 后续完善类型映射后可以启用
-    return null;
+    const activity = await prisma.activity.findUnique({
+      where: { id },
+      include: { publisher: true },
+    });
+    if (!activity) return null;
+    return {
+      id: activity.id,
+      publisherId: activity.publisherId,
+      publisher: undefined, // db模式需单独查询publisher表获取完整信息
+      title: activity.title,
+      activityType: activity.activityType ?? undefined,
+      gradeScope: activity.gradeScope,
+      genre: activity.genre ?? undefined,
+      themeTags: activity.themeTags ?? undefined,
+      submissionEmail: activity.submissionEmail ?? undefined,
+      submissionMethod: activity.submissionMethod ?? undefined,
+      submissionFormat: activity.submissionFormat ?? undefined,
+      emailSubjectFormat: activity.emailSubjectFormat ?? undefined,
+      deadline: activity.deadline ?? undefined,
+      isLongTerm: activity.isLongTerm,
+      hasPayment: activity.hasPayment,
+      hasBonus: activity.hasBonus,
+      hasCertificate: activity.hasCertificate,
+      hasSampleIssue: activity.hasSampleIssue,
+      hasTeacherGuide: activity.hasTeacherGuide,
+      hasOrgAward: activity.hasOrgAward,
+      supportSelfSubmission: activity.supportSelfSubmission,
+      supportAgentSubmission: activity.supportAgentSubmission,
+      activityStatus: activity.activityStatus as ActivityStatus,
+      auditStatus: activity.auditStatus as AuditStatus,
+      sourceUrl: activity.sourceUrl ?? undefined,
+      originalDetail: activity.originalDetail ?? undefined,
+      publicSummary: activity.publicSummary ?? undefined,
+      paidDetail: activity.paidDetail ?? undefined,
+      coverImage: activity.coverImage ?? undefined,
+      views: activity.views,
+      submissions: activity.submissions,
+      originalUrl: activity.originalUrl ?? undefined,
+      supplementMaterials: activity.supplementMaterials,
+      writingSuggestions: activity.writingSuggestions ?? undefined,
+      createdAt: activity.createdAt,
+      updatedAt: activity.updatedAt,
+    };
   }
 
   async findAll(): Promise<ActivityListItem[]> {
@@ -47,10 +88,26 @@ export class ActivityRepository implements IActivityRepository {
         activityStatus: activity.activityStatus,
         publicSummary: activity.publicSummary || "",
         coverImage: activity.coverImage,
-      })) as ActivityListItem[];
+      }));
     }
-    // 当使用真实数据库时，返回空数组避免类型复杂问题
-    return [];
+    const activities = await prisma.activity.findMany({
+      where: { auditStatus: "approved" },
+      include: { publisher: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+    });
+    return activities.map((a) => ({
+      id: a.id,
+      title: a.title,
+      publisherName: a.publisher?.name || "",
+      gradeScope: a.gradeScope,
+      hasPayment: a.hasPayment,
+      hasCertificate: a.hasCertificate,
+      deadline: a.deadline ?? undefined,
+      isLongTerm: a.isLongTerm,
+      activityStatus: a.activityStatus as ActivityStatus,
+      publicSummary: a.publicSummary || "",
+      coverImage: a.coverImage ?? undefined,
+    }));
   }
 
   async filter(filters: {
@@ -75,10 +132,48 @@ export class ActivityRepository implements IActivityRepository {
         activityStatus: activity.activityStatus,
         publicSummary: activity.publicSummary || "",
         coverImage: activity.coverImage,
-      })) as ActivityListItem[];
+      }));
     }
-    // 当使用真实数据库时，返回空数组避免类型复杂问题
-    return [];
+    const where: Record<string, unknown> = { auditStatus: "approved" };
+    if (filters.gradeScope && filters.gradeScope.length > 0) {
+      where.gradeScope = { hasSome: filters.gradeScope };
+    }
+    if (filters.genre && filters.genre.length > 0) {
+      where.genre = { hasSome: filters.genre };
+    }
+    if (filters.activityStatus) {
+      where.activityStatus = filters.activityStatus;
+    }
+    if (filters.hasPayment !== undefined) {
+      where.hasPayment = filters.hasPayment;
+    }
+    if (filters.hasCertificate !== undefined) {
+      where.hasCertificate = filters.hasCertificate;
+    }
+    if (filters.keyword) {
+      where.OR = [
+        { title: { contains: filters.keyword, mode: "insensitive" } },
+        { publicSummary: { contains: filters.keyword, mode: "insensitive" } },
+      ];
+    }
+    const activities = await prisma.activity.findMany({
+      where,
+      include: { publisher: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+    });
+    return activities.map((a) => ({
+      id: a.id,
+      title: a.title,
+      publisherName: a.publisher?.name || "",
+      gradeScope: a.gradeScope,
+      hasPayment: a.hasPayment,
+      hasCertificate: a.hasCertificate,
+      deadline: a.deadline ?? undefined,
+      isLongTerm: a.isLongTerm,
+      activityStatus: a.activityStatus as ActivityStatus,
+      publicSummary: a.publicSummary || "",
+      coverImage: a.coverImage ?? undefined,
+    }));
   }
 }
 

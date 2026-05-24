@@ -4,6 +4,7 @@
 // ============================================================================
 
 import { USE_MOCK } from "@/server/config/data-source";
+import { prisma } from "@/server/db/prisma";
 import { MOCK_CLASSES } from "@/lib/mock/classes";
 
 // Repository 接口
@@ -19,21 +20,52 @@ export class ClassRepository implements IClassRepository {
     if (USE_MOCK) {
       return MOCK_CLASSES.find((c) => c.id === id) || null;
     }
-    return null;
+    const cls = await prisma.class.findUnique({ where: { id } });
+    if (!cls) return null;
+    return {
+      id: cls.id,
+      organizationId: cls.organizationId ?? undefined,
+      teacherIdentityId: cls.teacherIdentityId ?? "",
+      className: cls.className,
+      grade: cls.grade ?? undefined,
+      status: cls.status as "active" | "inactive",
+      createdAt: cls.createdAt,
+      updatedAt: cls.updatedAt,
+    };
   }
 
   async findByOrganization(organizationId: string) {
     if (USE_MOCK) {
       return MOCK_CLASSES.filter((c) => c.organizationId === organizationId);
     }
-    return [];
+    const classes = await prisma.class.findMany({ where: { organizationId } });
+    return classes.map((c) => ({
+      id: c.id,
+      organizationId: c.organizationId ?? undefined,
+      teacherIdentityId: c.teacherIdentityId ?? "",
+      className: c.className,
+      grade: c.grade ?? undefined,
+      status: c.status as "active" | "inactive",
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+    }));
   }
 
   async findByTeacher(teacherIdentityId: string) {
     if (USE_MOCK) {
       return MOCK_CLASSES.filter((c) => c.teacherIdentityId === teacherIdentityId);
     }
-    return [];
+    const classes = await prisma.class.findMany({ where: { teacherIdentityId } });
+    return classes.map((c) => ({
+      id: c.id,
+      organizationId: c.organizationId ?? undefined,
+      teacherIdentityId: c.teacherIdentityId ?? "",
+      className: c.className,
+      grade: c.grade ?? undefined,
+      status: c.status as "active" | "inactive",
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+    }));
   }
 }
 
