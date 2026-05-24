@@ -1,5 +1,33 @@
 # 更新日志
 
+## 2026-05-24 Phase 4A 基础设施加固
+
+### 功能改进
+
+#### 1. Repository 数据库分支完善
+- **问题**：USE_MOCK=false 时 repository 返回 null/[]，无法真正查询数据库
+- **优化**：为以下 9 个 repository 添加完整的 Prisma 查询分支
+- **文件**：`src/server/repositories/*.ts`
+
+| Repository | 方法 |
+|------------|------|
+| user.repository.ts | findById, findByPhone |
+| identity.repository.ts | findById, findByUserId |
+| student.repository.ts | findById, findByOwner, findByOrganization, findByClass |
+| class.repository.ts | findById, findByOrganization, findByTeacher |
+| essay.repository.ts | findById, findByOwner, findByStudent, findVersions |
+| activity.repository.ts | findById, findAll, filter |
+| order.repository.ts | findById, findByIdentity, findByOrganization |
+| entitlement.repository.ts | findByIdentityId |
+| membership.repository.ts | findByIdentityId |
+
+#### 2. 数据埋点基础设施
+- 25 种事件类型完整定义
+- 全站页面埋点接入（PAGE_VIEW）
+- 事件常量统一管理
+
+---
+
 ## 2026-05-24 Phase 2 运营任务池增强
 
 ### 功能改进
