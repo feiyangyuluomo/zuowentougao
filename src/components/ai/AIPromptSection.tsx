@@ -111,10 +111,10 @@ export function AIPromptSection({ analysis, isLoading, onStartRecommend, essayCo
       <CardContent className="space-y-4">
         {/* 基本信息 */}
         <div className="grid grid-cols-2 gap-3">
-          {analysis.grade && (
-            <div className="p-3 bg-white rounded-lg border">
-              <div className="text-xs text-gray-500 mb-1">适合年级</div>
-              <div className="font-medium">{analysis.grade}年级</div>
+          {analysis.qualityScore && (
+            <div className="p-3 bg-white rounded-lg border border-purple-200">
+              <div className="text-xs text-gray-500 mb-1">质量评分</div>
+              <div className="font-medium text-purple-700">{analysis.qualityScore}/10</div>
             </div>
           )}
           {analysis.genre && (

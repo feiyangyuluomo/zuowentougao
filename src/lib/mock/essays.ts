@@ -239,3 +239,47 @@ export function getMockEssaysByStudentId(studentId: string) {
 export function getMockEssayVersions(essayId: string) {
   return MOCK_ESSAY_VERSIONS.filter((v) => v.essayId === essayId);
 }
+
+// ============================================================================
+// 作文操作函数
+// ============================================================================
+
+// 内存中的作文列表
+let essaysStore: Essay[] = [...MOCK_ESSAYS];
+
+/**
+ * 创建新作文
+ */
+export function createMockEssay(params: {
+  title: string;
+  content: string;
+  grade: string;
+  ownerIdentityId: string;
+  studentId?: string;
+}): Essay {
+  const newEssay: Essay = {
+    id: `ess-${Date.now()}`,
+    studentId: params.studentId || `stu-${Date.now()}`,
+    ownerIdentityId: params.ownerIdentityId,
+    title: params.title,
+    content: params.content,
+    wordCount: params.content.length,
+    genre: "narrative",
+    themeTags: [],
+    status: "draft",
+    coverImage: undefined,
+    latestVersionId: `ver-${Date.now()}`,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  essaysStore.push(newEssay);
+  return newEssay;
+}
+
+/**
+ * 获取用户的作文列表
+ */
+export function getMockEssaysByOwner(ownerIdentityId: string): Essay[] {
+  return essaysStore.filter((e) => e.ownerIdentityId === ownerIdentityId);
+}

@@ -16,11 +16,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Sparkles, Upload, CheckCircle } from "lucide-react";
 import { GRADE_OPTIONS } from "@/constants";
 import { MOCK_AI_ANALYSIS_RESULT, MOCK_AI_RECOMMEND_RESULTS } from "@/lib/mock/ai-results";
+import { createMockEssay } from "@/lib/mock/essays";
 import type { AIAnalysisOutput, AIRecommendResult } from "@/types";
 
 export default function AIAssistantPage() {
   const router = useRouter();
-  const { isAuthenticated, isMember } = useAuthStore();
+  const { isAuthenticated, isMember, currentIdentity } = useAuthStore();
   const [grade, setGrade] = useState<string>("");
   const [title, setTitle] = useState<string>("");
   const [content, setContent] = useState("");
@@ -85,11 +86,25 @@ export default function AIAssistantPage() {
       alert("请输入作文标题");
       return;
     }
-    // TODO: 调用保存作文的接口
-    console.log("保存作文:", finalTitle, content.slice(0, 100));
+
+    if (!currentIdentity) {
+      alert("请先登录");
+      return;
+    }
+
+    // 创建新作文
+    const newEssay = createMockEssay({
+      title: finalTitle,
+      content: content,
+      grade: grade,
+      ownerIdentityId: currentIdentity.id,
+    });
+
     alert(`作文"${finalTitle}"已保存到"我的作文"中`);
     // 清空标题
     setTitle("");
+    // 跳转到我的作文页面
+    router.push("/essays");
   };
 
   return (
