@@ -2,8 +2,9 @@
 
 import { useParams } from "next/navigation";
 import { useAuthStore } from "@/stores";
-import { canAccessWorkspace } from "@/lib/permissions";
+import { canAccessWorkspace, canAccessStudent } from "@/lib/permissions";
 import { getMockStudentById } from "@/lib/mock/students";
+import { AccessDenied } from "@/components/common/AccessDenied";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,18 +17,14 @@ export default function StudentDetailPage() {
   const studentId = params.id as string;
   const { currentIdentity } = useAuthStore();
 
+  // 检查是否可以访问工作台
   if (!canAccessWorkspace(currentIdentity)) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Card className="w-96">
-          <CardContent className="pt-6">
-            <div className="text-center text-gray-500">
-              您没有权限访问此页面
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <AccessDenied message="您没有权限访问工作台" redirectTo="/" />;
+  }
+
+  // 检查资源归属权限
+  if (!canAccessStudent(currentIdentity, studentId)) {
+    return <AccessDenied message="您没有权限访问此学生" redirectTo="/workspace/students" />;
   }
 
   const identityType = currentIdentity?.identityType;

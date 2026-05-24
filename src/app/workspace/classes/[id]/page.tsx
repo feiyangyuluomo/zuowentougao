@@ -2,12 +2,12 @@
 
 import { useParams } from "next/navigation";
 import { useAuthStore } from "@/stores";
-import { canAccessWorkspace } from "@/lib/permissions";
-import { getMockClassById, getMockClassesByTeacher, getMockClassesByOrganization } from "@/lib/mock/classes";
+import { canAccessWorkspace, canAccessClass } from "@/lib/permissions";
+import { getMockClassById } from "@/lib/mock/classes";
 import { getMockStudentsByOwner } from "@/lib/mock/students";
+import { AccessDenied } from "@/components/common/AccessDenied";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { ArrowLeft, Users, GraduationCap, Edit, FileText, UserPlus } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -17,44 +17,21 @@ export default function ClassDetailPage() {
   const classId = params.id as string;
   const { currentIdentity } = useAuthStore();
 
+  // 检查是否可以访问工作台
   if (!canAccessWorkspace(currentIdentity)) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Card className="w-96">
-          <CardContent className="pt-6">
-            <div className="text-center text-gray-500">
-              您没有权限访问此页面
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <AccessDenied message="您没有权限访问工作台" redirectTo="/" />;
+  }
+
+  // 检查资源归属权限
+  if (!canAccessClass(currentIdentity, classId)) {
+    return <AccessDenied message="您没有权限访问此班级" redirectTo="/workspace/classes" />;
   }
 
   const identityType = currentIdentity?.identityType;
   const identityId = currentIdentity?.id || "";
-  const orgId = currentIdentity?.organizationId;
 
   // 获取班级信息
   const cls = getMockClassById(classId);
-
-  // 如果是机构管理员，获取该机构的所有班级来验证权限
-  if (identityType === "organization_admin" && orgId) {
-    const orgClasses = getMockClassesByOrganization(orgId);
-    if (!orgClasses.find((c) => c.id === classId)) {
-      return (
-        <div className="flex items-center justify-center h-96">
-          <Card className="w-96">
-            <CardContent className="pt-6">
-              <div className="text-center text-gray-500">
-                您没有权限查看此班级
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
-  }
 
   // 获取班级学生（这里简化处理，实际应按班级关联学生）
   const students = getMockStudentsByOwner(identityId);
