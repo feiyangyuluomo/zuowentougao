@@ -7,21 +7,14 @@ import { useAuthStore } from "@/stores";
 import { canAccessWorkspace } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
   LayoutDashboard,
   Users,
   BookOpen,
   FileText,
   BarChart3,
-  ChevronDown,
-  LogOut,
-  User,
+  Send,
+  BookMarked,
+  UserCog,
 } from "lucide-react";
 
 const WORKSPACE_MENU = [
@@ -40,19 +33,37 @@ const WORKSPACE_MENU = [
     title: "学生管理",
     href: "/workspace/students",
     icon: BookOpen,
-    roles: ["teacher", "organization_admin", "organization_teacher"],
+    roles: ["teacher", "organization_admin", "organization_teacher", "parent"],
   },
   {
-    title: "批量操作",
+    title: "老师管理",
+    href: "/workspace/teachers",
+    icon: UserCog,
+    roles: ["organization_admin"],
+  },
+  {
+    title: "作文管理",
+    href: "/workspace/essays",
+    icon: BookMarked,
+    roles: ["teacher", "organization_admin", "organization_teacher", "parent"],
+  },
+  {
+    title: "投稿记录",
+    href: "/workspace/submissions",
+    icon: Send,
+    roles: ["teacher", "organization_admin", "organization_teacher", "parent"],
+  },
+  {
+    title: "批量上传",
     href: "/workspace/essays/batch",
     icon: FileText,
-    roles: ["teacher", "organization_admin"],
+    roles: ["teacher", "organization_admin", "parent"],
   },
   {
     title: "数据统计",
     href: "/workspace/statistics",
     icon: BarChart3,
-    roles: ["organization_admin"],
+    roles: ["teacher", "organization_admin", "parent"],
   },
 ];
 
@@ -62,7 +73,7 @@ export default function WorkspaceLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { user, currentIdentity, logout, isAuthenticated } = useAuthStore();
+  const { currentIdentity, isAuthenticated } = useAuthStore();
 
   if (!isAuthenticated()) {
     return (
@@ -89,11 +100,6 @@ export default function WorkspaceLayout({
     );
   }
 
-  const handleLogout = () => {
-    logout();
-    window.location.href = "/";
-  };
-
   const identityTypeLabels: Record<string, string> = {
     teacher: "个人老师",
     organization_admin: "机构管理员",
@@ -112,7 +118,7 @@ export default function WorkspaceLayout({
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <LayoutDashboard className="h-4 w-4 text-white" />
             </div>
-            <span className="font-semibold text-gray-900">老师工作台</span>
+            <span className="font-semibold text-gray-900">我的工作台</span>
           </Link>
         </div>
 
@@ -148,32 +154,8 @@ export default function WorkspaceLayout({
       <div className="flex flex-1 flex-col">
         {/* Top Header */}
         <header className="flex h-16 items-center justify-between border-b bg-white px-6">
-          <div className="text-sm text-gray-500">
-            {currentIdentity &&
-              identityTypeLabels[currentIdentity.identityType]}
-          </div>
-
-          <div className="flex items-center gap-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.avatar} />
-                    <AvatarFallback>
-                      {user?.nickname?.[0] || <User className="h-4 w-4" />}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium">{user?.nickname}</span>
-                  <ChevronDown className="h-4 w-4 text-gray-400" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={handleLogout} className="text-red-500 cursor-pointer">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  退出登录
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div className="text-sm font-medium text-primary">
+            {currentIdentity && identityTypeLabels[currentIdentity.identityType]}
           </div>
         </header>
 

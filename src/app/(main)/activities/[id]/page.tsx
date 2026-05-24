@@ -189,22 +189,24 @@ export default function ActivityDetailPage() {
               <CardTitle>征稿方</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center text-lg font-semibold">
-                  {activity.publisher?.name?.charAt(0) || "?"}
-                </div>
-                <div>
-                  <div className="font-medium">
-                    {activity.publisher?.name || "未知"}
+              <Link href={`/media-library/publishers/${activity.publisherId}`} className="block">
+                <div className="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors cursor-pointer">
+                  <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center text-lg font-semibold">
+                    {activity.publisher?.name?.charAt(0) || "?"}
                   </div>
-                  <div className="text-sm text-gray-500">
-                    {activity.publisher?.publisherType === "magazine" && "杂志社"}
-                    {activity.publisher?.publisherType === "newspaper" && "报社"}
-                    {activity.publisher?.publisherType === "official_account" && "公众号"}
-                    {activity.publisher?.publisherType === "organization" && "机构"}
+                  <div>
+                    <div className="font-medium">
+                      {activity.publisher?.name || "未知"}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {activity.publisher?.publisherType === "magazine" && "杂志社"}
+                      {activity.publisher?.publisherType === "newspaper" && "报社"}
+                      {activity.publisher?.publisherType === "official_account" && "公众号"}
+                      {activity.publisher?.publisherType === "organization" && "机构"}
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             </CardContent>
           </Card>
 

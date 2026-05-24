@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores";
-import { MAIN_MENU, USER_MENU } from "@/constants";
+import { MAIN_MENU, USER_MENU, WORKSPACE_MENU_ITEMS, ROUTES } from "@/constants";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,17 +14,45 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sparkles, Menu, User, LogOut } from "lucide-react";
+import { Sparkles, Menu, User, LogOut, LayoutDashboard } from "lucide-react";
+import type { IdentityType } from "@/types/common";
+
+// 判断是否为运营相关角色
+function isOperatorRole(identityType?: IdentityType): boolean {
+  return identityType === "operator" || identityType === "admin" || identityType === "editor";
+}
 
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthenticated, logout, isMember } = useAuthStore();
+  const { user, isAuthenticated, logout, isMember, currentIdentity } = useAuthStore();
 
   const handleLogout = () => {
     logout();
     router.push("/");
   };
+
+  // 根据角色获取工作台菜单
+  const getWorkspaceMenu = () => {
+    if (isOperatorRole(currentIdentity?.identityType)) {
+      return WORKSPACE_MENU_ITEMS.operator;
+    }
+    if (currentIdentity?.identityType === "parent") {
+      return WORKSPACE_MENU_ITEMS.parent;
+    }
+    if (currentIdentity?.identityType === "organization_admin") {
+      return WORKSPACE_MENU_ITEMS.organization_admin;
+    }
+    if (
+      currentIdentity?.identityType === "teacher" ||
+      currentIdentity?.identityType === "organization_teacher"
+    ) {
+      return WORKSPACE_MENU_ITEMS.teacher;
+    }
+    return WORKSPACE_MENU_ITEMS.teacher;
+  };
+
+  const workspaceMenu = getWorkspaceMenu();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
@@ -90,14 +118,28 @@ export function Header() {
                 <div className="px-2 py-1.5 text-xs text-gray-500">
                   {isMember() ? "年费会员" : "普通用户"}
                 </div>
+                {isAuthenticated() && (
+                  <>
+                    <DropdownMenuSeparator />
+                    {/* 我的工作台 - 根据角色显示不同内容 */}
+                    <div className="px-2 py-1.5 text-xs text-gray-500">
+                      我的工作台
+                    </div>
+                    {workspaceMenu.map((item) => (
+                      <DropdownMenuItem key={item.href}>
+                        <Link href={item.href} className="flex items-center w-full">
+                          {item.title}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </>
+                )}
                 <DropdownMenuSeparator />
-                {USER_MENU.map((item) => (
-                  <DropdownMenuItem key={item.href}>
-                    <Link href={item.href} className="flex items-center w-full">
-                      {item.title}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
+                <DropdownMenuItem>
+                  <Link href={ROUTES.IDENTITY_SWITCH} className="flex items-center w-full">
+                    身份切换
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-red-500 cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />

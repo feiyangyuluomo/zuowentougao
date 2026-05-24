@@ -103,7 +103,7 @@ export function canAccessEditor(identity: UserIdentity | null): boolean {
 }
 
 /**
- * 检查是否具有工作台（老师/机构）权限
+ * 检查是否具有工作台（老师/机构/家长）权限
  */
 export function canAccessWorkspace(identity: UserIdentity | null): boolean {
   if (!identity) return false;
@@ -112,6 +112,7 @@ export function canAccessWorkspace(identity: UserIdentity | null): boolean {
     "teacher",
     "organization_admin",
     "organization_teacher",
+    "parent",
   ].includes(identity.identityType);
 }
 

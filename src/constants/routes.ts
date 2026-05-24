@@ -25,8 +25,12 @@ export const ROUTES = {
   // 成长档案
   GROWTH_RECORDS: "/growth-records",
 
-  // 会员中心
+  // 会员服务
   MEMBERSHIP: "/membership",
+
+  // 媒体库（征稿方展示）
+  MEDIA_LIBRARY: "/media-library",
+  MEDIA_PUBLISHER_DETAIL: (id: string) => `/media-library/publishers/${id}`,
 
   // 身份切换
   IDENTITY_SWITCH: "/identity-switch",
@@ -66,37 +70,63 @@ export const MAIN_MENU = [
     icon: "book-open",
   },
   {
+    title: "媒体库",
+    href: ROUTES.MEDIA_LIBRARY,
+    icon: "library",
+  },
+  {
     title: "AI投稿助手",
     href: ROUTES.AI_ASSISTANT,
     icon: "sparkles",
   },
   {
-    title: "我的作文",
-    href: ROUTES.ESSAYS,
-    icon: "file-text",
-  },
-  {
-    title: "我的学生",
-    href: ROUTES.STUDENTS,
-    icon: "users",
-  },
-  {
-    title: "自主投稿记录",
-    href: ROUTES.SELF_SUBMISSIONS,
-    icon: "send",
-  },
-  {
-    title: "成长档案",
-    href: ROUTES.GROWTH_RECORDS,
-    icon: "timeline",
+    title: "会员服务",
+    href: ROUTES.MEMBERSHIP,
+    icon: "credit-card",
   },
 ] as const;
 
+// 我的工作台菜单项（按角色区分）
+export const WORKSPACE_MENU_ITEMS = {
+  // 家长角色看到的菜单
+  parent: [
+    { title: "学生管理", href: ROUTES.WORKSPACE_STUDENTS, icon: "users" },
+    { title: "作文管理", href: "/workspace/essays", icon: "file-text" },
+    { title: "投稿记录", href: "/workspace/submissions", icon: "send" },
+    { title: "批量上传", href: "/workspace/essays/batch", icon: "upload" },
+    { title: "数据统计", href: "/workspace/statistics", icon: "bar-chart" },
+  ],
+  // 个人老师/机构老师看到的菜单
+  teacher: [
+    { title: "班级管理", href: ROUTES.WORKSPACE_CLASSES, icon: "users" },
+    { title: "学生管理", href: ROUTES.WORKSPACE_STUDENTS, icon: "book-open" },
+    { title: "作文管理", href: "/workspace/essays", icon: "file-text" },
+    { title: "投稿记录", href: "/workspace/submissions", icon: "send" },
+    { title: "批量上传", href: "/workspace/essays/batch", icon: "upload" },
+    { title: "数据统计", href: "/workspace/statistics", icon: "bar-chart" },
+  ],
+  // 机构管理员看到的菜单
+  organization_admin: [
+    { title: "班级管理", href: ROUTES.WORKSPACE_CLASSES, icon: "users" },
+    { title: "学生管理", href: ROUTES.WORKSPACE_STUDENTS, icon: "book-open" },
+    { title: "老师管理", href: "/workspace/teachers", icon: "user-cog" },
+    { title: "作文管理", href: "/workspace/essays", icon: "file-text" },
+    { title: "投稿记录", href: "/workspace/submissions", icon: "send" },
+    { title: "批量上传", href: "/workspace/essays/batch", icon: "upload" },
+    { title: "数据统计", href: "/workspace/statistics", icon: "bar-chart" },
+  ],
+  // 运营角色看到的菜单
+  operator: [
+    { title: "平台代投任务池", href: ROUTES.ADMIN_AGENT_TASKS, icon: "list-todo" },
+  ],
+} as const;
+
 export const USER_MENU = [
   {
-    title: "会员中心",
-    href: ROUTES.MEMBERSHIP,
-    icon: "credit-card",
+    title: "我的工作台",
+    href: null, // 下拉菜单，无直接链接
+    icon: "layout-dashboard",
+    isWorkspace: true,
   },
   {
     title: "身份切换",
