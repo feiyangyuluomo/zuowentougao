@@ -7,7 +7,7 @@ import { MOCK_ACTIVITIES } from "./activities";
 import { MOCK_ESSAYS } from "./essays";
 
 // 内存中的投稿记录（可持久化到 localStorage）
-let selfSubmissionsStore: SelfSubmission[] = [
+export let selfSubmissionsStore: SelfSubmission[] = [
   {
     id: "sub-001",
     essayId: "essay-001",

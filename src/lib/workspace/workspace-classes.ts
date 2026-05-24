@@ -5,6 +5,7 @@
 import type { UserIdentity, Class } from "@/types";
 import { isOrganizationAdmin } from "@/lib/permissions";
 import { getMockClassesByTeacher, getMockClassesByOrganization } from "@/lib/mock/classes";
+import { getMockStudentsByOwner, getMockStudentsByOrganization } from "@/lib/mock/students";
 
 /**
  * 工作台班级列表项
@@ -27,30 +28,33 @@ export function getWorkspaceClasses(identity: UserIdentity | null): WorkspaceCla
   }
 
   const identityType = identity.identityType;
+  const identityId = identity.id;
+  const orgId = identity.organizationId;
 
   // 机构管理员获取机构下所有班级
-  if (isOrganizationAdmin(identity)) {
-    const orgId = identity.organizationId;
-    if (!orgId) return [];
-
+  if (isOrganizationAdmin(identity) && orgId) {
     const classes = getMockClassesByOrganization(orgId);
+    const orgStudents = getMockStudentsByOrganization(orgId);
+
     return classes.map((cls: Class) => ({
       id: cls.id,
       className: cls.className,
       grade: cls.grade,
-      studentCount: 0, // TODO: 从实际数据获取
+      studentCount: orgStudents.filter((s) => s.classId === cls.id).length,
       isOrganization: true,
     }));
   }
 
   // 个人老师获取自己创建的班级
   if (identityType === "teacher") {
-    const classes = getMockClassesByTeacher(identity.id);
+    const classes = getMockClassesByTeacher(identityId);
+    const teacherStudents = getMockStudentsByOwner(identityId);
+
     return classes.map((cls: Class) => ({
       id: cls.id,
       className: cls.className,
       grade: cls.grade,
-      studentCount: 0, // TODO: 从实际数据获取
+      studentCount: teacherStudents.filter((s) => s.classId === cls.id).length,
       isOrganization: false,
     }));
   }

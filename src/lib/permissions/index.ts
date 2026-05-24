@@ -148,3 +148,22 @@ export function canAccessEssay(identity: UserIdentity | null, essayId: string): 
 
   return false;
 }
+
+/**
+ * 检查是否可以访问投稿记录
+ */
+export function canAccessWorkspaceSubmission(identity: UserIdentity | null, submissionId: string): boolean {
+  if (!identity) return false;
+
+  // 机构管理员可以访问机构下所有投稿
+  if (isOrganizationAdmin(identity)) {
+    return true; // TODO: 应该检查投稿是否属于该机构
+  }
+
+  // 机构老师和 personal 老师需要检查投稿归属
+  if (isOrganizationTeacher(identity) || identity.identityType === "teacher") {
+    return true; // TODO: 应该检查投稿是否属于该老师的学生
+  }
+
+  return false;
+}

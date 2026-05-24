@@ -128,3 +128,8 @@ export function getMockStudentById(id: string) {
 export function getMockStudentsByOwner(ownerIdentityId: string) {
   return MOCK_STUDENTS.filter((s) => s.ownerIdentityId === ownerIdentityId);
 }
+
+// 获取某个机构下的学生列表
+export function getMockStudentsByOrganization(organizationId: string) {
+  return MOCK_STUDENTS.filter((s) => s.organizationId === organizationId);
+}
