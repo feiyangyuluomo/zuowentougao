@@ -215,6 +215,7 @@ export const useAuthStore = create<AuthStore>()(
         currentIdentity: state.currentIdentity,
         entitlements: state.entitlements,
         membership: state.membership,
+        _isAuthenticated: state._isAuthenticated,
       }),
     }
   )

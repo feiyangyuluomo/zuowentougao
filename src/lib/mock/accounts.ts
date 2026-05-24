@@ -35,6 +35,11 @@ export const MOCK_ACCOUNTS: MockAccount[] = [
     nickname: "李管理员",
     userId: "user-org-admin-001",
   },
+  {
+    phone: "13800138005",
+    nickname: "王老师",
+    userId: "user-org-teacher-001",
+  },
 ];
 
 // 根据手机号获取用户
@@ -84,10 +89,10 @@ export const MOCK_IDENTITIES: UserIdentity[] = [
     createdAt: new Date("2025-01-01"),
     updatedAt: new Date("2025-01-01"),
   },
-  // 机构老师 (示例)
+  // 机构老师
   {
     id: "id-org-teacher-001",
-    userId: "user-org-admin-001", // 复用同一用户，便于测试
+    userId: "user-org-teacher-001",
     identityType: "organization_teacher",
     organizationId: "org-001",
     status: "active",
