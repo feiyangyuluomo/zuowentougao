@@ -43,10 +43,13 @@ export function getWorkspaceStudents(identity: UserIdentity | null): WorkspaceSt
     // 机构管理员：获取机构下所有学生
     students = getMockStudentsByOrganization(orgId);
   } else if (isOrganizationTeacher(identity)) {
-    // 机构老师：获取授权班级的学生（暂时按 ownerIdentityId）
+    // 机构老师：获取授权班级的学生
     students = getMockStudentsByOwner(identityId);
   } else if (identity.identityType === "teacher") {
     // 个人老师：获取自己创建的学生
+    students = getMockStudentsByOwner(identityId);
+  } else if (identity.identityType === "parent") {
+    // 家长：获取自己名下的孩子
     students = getMockStudentsByOwner(identityId);
   }
 

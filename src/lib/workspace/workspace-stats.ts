@@ -75,12 +75,17 @@ function getStudentsForIdentity(identity: UserIdentity): Student[] {
   }
 
   if (isOrganizationTeacher(identity)) {
-    // 机构老师：获取授权班级的学生（暂时按 ownerIdentityId）
+    // 机构老师：获取授权班级的学生
     return getMockStudentsByOwner(identityId);
   }
 
   if (identity.identityType === "teacher") {
     // 个人老师：获取自己创建的学生
+    return getMockStudentsByOwner(identityId);
+  }
+
+  if (identity.identityType === "parent") {
+    // 家长：获取自己名下的孩子
     return getMockStudentsByOwner(identityId);
   }
 

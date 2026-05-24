@@ -43,10 +43,10 @@ export function Header() {
     if (currentIdentity?.identityType === "organization_admin") {
       return WORKSPACE_MENU_ITEMS.organization_admin;
     }
-    if (
-      currentIdentity?.identityType === "teacher" ||
-      currentIdentity?.identityType === "organization_teacher"
-    ) {
+    if (currentIdentity?.identityType === "organization_teacher") {
+      return WORKSPACE_MENU_ITEMS.organization_teacher;
+    }
+    if (currentIdentity?.identityType === "teacher") {
       return WORKSPACE_MENU_ITEMS.teacher;
     }
     return WORKSPACE_MENU_ITEMS.teacher;
