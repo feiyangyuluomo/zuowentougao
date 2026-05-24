@@ -1,0 +1,607 @@
+// ============================================================================
+// 作文投稿平台数据库 Schema
+// PostgreSQL + Prisma
+//
+// 核心模型：账号 → 身份 → 权益
+// 投稿模式：自主投稿 + 平台代投
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// Enums
+// ============================================================================
+
+enum IdentityType {
+  parent
+  teacher
+  organization_admin
+  organization_teacher
+  operator
+  admin
+}
+
+enum EntitlementType {
+  view_activity_detail
+  view_submission_email
+  ai_rewrite
+  ai_recommend
+  agent_submission
+  manual_review
+}
+
+enum MembershipType {
+  monthly
+  yearly
+  lifetime
+}
+
+enum MembershipStatus {
+  active
+  expired
+  cancelled
+}
+
+enum OrderType {
+  membership
+  ai_rewrite
+  agent_submission
+  manual_review
+  organization_package
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  refunded
+  cancelled
+}
+
+enum EssayStatus {
+  draft
+  published
+}
+
+enum EssayVersionType {
+  original
+  ai_rewrite
+  manual_edit
+  final_submission
+  agent_submission
+}
+
+enum SelfSubmissionStatus {
+  pending
+  user_submitted
+  waiting_reply
+  shortlisted
+  planned_publish
+  suspected_published
+  published
+  rejected
+  closed
+}
+
+enum AgentFrontendStatus {
+  pending
+  accepted
+  preparing
+  submitted
+  waiting_reply
+  shortlisted
+  planned_publish
+  suspected_published
+  published
+  rejected
+  closed
+}
+
+enum AgentBackendStatus {
+  waiting_assign
+  assigned
+  reviewing_essay
+  selecting_activity
+  preparing_submission
+  submitting
+  submit_failed
+  submitted
+  waiting_reply
+  need_more_info
+  suspected_duplicate
+  suspected_multi_submission
+  shortlisted
+  planned_publish
+  suspected_published
+  published
+  rejected
+  closed
+}
+
+enum ActivityStatus {
+  recruiting
+  closing_soon
+  closed
+  long_term
+}
+
+enum AuditStatus {
+  pending
+  approved
+  rejected
+}
+
+enum PublisherType {
+  newspaper
+  magazine
+  official_account
+  organization
+  school
+  other
+}
+
+enum SubmissionMethod {
+  email
+  website
+  mini_program
+  wechat
+  system
+  offline
+  other
+}
+
+enum ScreenshotType {
+  email_sent
+  submit_success
+  submit_failed
+  other
+}
+
+enum PriorityLevel {
+  low
+  medium
+  high
+}
+
+enum StudentStatus {
+  active
+  inactive
+}
+
+enum ClassStatus {
+  active
+  inactive
+}
+
+enum RecordType {
+  essay
+  submission
+  publication
+  award
+  certificate
+}
+
+// ============================================================================
+// 用户与身份系统
+// ============================================================================
+
+model User {
+  id        String   @id @default(cuid())
+  nickname  String
+  phone     String   @unique
+  avatar    String?
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  identities UserIdentity[]
+
+  @@map("users")
+}
+
+model UserIdentity {
+  id             String       @id @default(cuid())
+  userId         String
+  identityType   IdentityType
+  organizationId String?
+  status         String       @default("active")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id])
+  organization    Organization?     @relation(fields: [organizationId], references: [id])
+  students        Student[]
+  essays          Essay[]
+  entitlements    Entitlement[]
+  memberships     Membership[]
+  orders          Order[]
+
+  @@index([userId])
+  @@index([organizationId])
+  @@map("user_identities")
+}
+
+model Organization {
+  id           String    @id @default(cuid())
+  name         String
+  description  String?
+  logo         String?
+  website      String?
+  studentLimit Int?
+  teacherLimit Int?
+  status       String    @default("active")
+  validFrom    DateTime?
+  expiredAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  identities   UserIdentity[]
+  classes      Class[]
+  students     Student[]
+  orders       Order[]
+
+  @@map("organizations")
+}
+
+// ============================================================================
+// 班级与学生系统
+// ============================================================================
+
+model Class {
+  id                String     @id @default(cuid())
+  organizationId    String?
+  teacherIdentityId String?
+  className         String
+  grade             String?
+  status            ClassStatus @default(active)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  students     Student[]
+
+  @@index([organizationId])
+  @@index([teacherIdentityId])
+  @@map("classes")
+}
+
+model Student {
+  id              String        @id @default(cuid())
+  ownerIdentityId String
+  organizationId  String?
+  classId         String?
+  studentName     String
+  school          String?
+  grade           String?
+  gender          String?
+  avatar          String?
+  phone           String?
+  parentPhone     String?
+  guideTeacher    String?
+  address        String?
+  birthday        DateTime?
+  status          StudentStatus @default(active)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  ownerIdentity   UserIdentity  @relation(fields: [ownerIdentityId], references: [id])
+  organization    Organization? @relation(fields: [organizationId], references: [id])
+  class           Class?        @relation(fields: [classId], references: [id])
+  essays          Essay[]
+  selfSubmissions SelfSubmission[]
+  agentSubmissions AgentSubmissionTask[]
+  growthRecords  GrowthRecord[]
+
+  @@index([ownerIdentityId])
+  @@index([organizationId])
+  @@index([classId])
+  @@map("students")
+}
+
+// ============================================================================
+// 作文作品库
+// ============================================================================
+
+model Essay {
+  id              String      @id @default(cuid())
+  studentId       String
+  ownerIdentityId String
+  title           String
+  content         String
+  wordCount       Int
+  genre           String?
+  themeTags       String[]
+  status          EssayStatus @default(draft)
+  coverImage      String?
+  latestVersionId String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  student         Student         @relation(fields: [studentId], references: [id])
+  ownerIdentity   UserIdentity     @relation(fields: [ownerIdentityId], references: [id])
+  versions        EssayVersion[]
+  selfSubmissions SelfSubmission[]
+  agentSubmissions AgentSubmissionTask[]
+
+  @@index([studentId])
+  @@index([ownerIdentityId])
+  @@map("essays")
+}
+
+model EssayVersion {
+  id                 String           @id @default(cuid())
+  essayId            String
+  versionType        EssayVersionType
+  content            String
+  summary            String?
+  createdByIdentityId String?
+  modelName          String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  essay Essay @relation(fields: [essayId], references: [id])
+
+  @@index([essayId])
+  @@map("essay_versions")
+}
+
+// ============================================================================
+// 活动库系统
+// ============================================================================
+
+model Publisher {
+  id           String        @id @default(cuid())
+  name         String
+  description  String?
+  logo         String?
+  website      String?
+  publisherType PublisherType
+  contactInfo  String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  activities Activity[]
+
+  @@map("publishers")
+}
+
+model Activity {
+  id                  String          @id @default(cuid())
+  publisherId         String
+  title               String
+  activityType        String?
+  gradeScope          String[]
+  genre               String[]
+  themeTags           String[]
+  submissionEmail     String?
+  submissionMethod    SubmissionMethod?
+  submissionFormat    String?
+  emailSubjectFormat  String?
+  deadline            DateTime?
+  isLongTerm          Boolean         @default(false)
+  hasPayment          Boolean         @default(false)
+  hasBonus            Boolean         @default(false)
+  hasCertificate      Boolean         @default(false)
+  hasSampleIssue      Boolean         @default(false)
+  hasTeacherGuide     Boolean         @default(false)
+  hasOrgAward         Boolean         @default(false)
+  supportSelfSubmission  Boolean       @default(true)
+  supportAgentSubmission Boolean      @default(true)
+  activityStatus      ActivityStatus  @default(recruiting)
+  auditStatus         AuditStatus     @default(pending)
+  sourceUrl           String?
+  originalDetail      String?
+  publicSummary       String?
+  paidDetail          String?
+  coverImage          String?
+  views               Int             @default(0)
+  submissions         Int             @default(0)
+  originalUrl         String?
+  supplementMaterials String[]
+  writingSuggestions  String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  publisher          Publisher             @relation(fields: [publisherId], references: [id])
+  selfSubmissions    SelfSubmission[]
+  agentSubmissions  AgentSubmissionTask[]
+
+  @@index([publisherId])
+  @@index([activityStatus])
+  @@index([auditStatus])
+  @@map("activities")
+}
+
+// ============================================================================
+// 投稿系统
+// ============================================================================
+
+model SelfSubmission {
+  id                 String              @id @default(cuid())
+  essayId            String
+  activityId         String
+  identityId         String
+  studentId         String
+  submissionEmail    String?
+  submissionMethod   SubmissionMethod?
+  userSubmissionTime DateTime?
+  userNote           String?
+  submissionStatus   SelfSubmissionStatus @default(pending)
+  resultStatus       SelfSubmissionStatus?
+  riskConfirmed      Boolean             @default(false)
+  riskConfirmedAt    DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  essay     Essay      @relation(fields: [essayId], references: [id])
+  activity  Activity  @relation(fields: [activityId], references: [id])
+  student   Student   @relation(fields: [studentId], references: [id])
+
+  @@index([essayId])
+  @@index([activityId])
+  @@index([identityId])
+  @@index([studentId])
+  @@map("self_submissions")
+}
+
+model AgentSubmissionTask {
+  id                     String                @id @default(cuid())
+  essayId                String
+  activityId            String
+  identityId            String
+  studentId             String
+  orderId               String?
+  operatorIdentityId    String?
+  platformSubmissionEmail String?
+  frontendStatus        AgentFrontendStatus   @default(pending)
+  backendStatus         AgentBackendStatus    @default(waiting_assign)
+  priorityLevel         PriorityLevel        @default(medium)
+  submissionTime        DateTime?
+  failureReason         String?
+  operatorNote         String?
+  userVisibleNote      String?
+  riskConfirmed        Boolean               @default(false)
+  riskConfirmedAt      DateTime?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+
+  essay        Essay                      @relation(fields: [essayId], references: [id])
+  activity    Activity                  @relation(fields: [activityId], references: [id])
+  student     Student                   @relation(fields: [studentId], references: [id])
+  order       Order?                    @relation(fields: [orderId], references: [id])
+  logs        AgentSubmissionLog[]
+  screenshots AgentSubmissionScreenshot[]
+
+  @@index([essayId])
+  @@index([activityId])
+  @@index([identityId])
+  @@index([studentId])
+  @@index([operatorIdentityId])
+  @@index([frontendStatus])
+  @@index([backendStatus])
+  @@map("agent_submission_tasks")
+}
+
+model AgentSubmissionLog {
+  id                   String              @id @default(cuid())
+  taskId               String
+  operatorIdentityId   String?
+  oldFrontendStatus    AgentFrontendStatus?
+  newFrontendStatus    AgentFrontendStatus?
+  oldBackendStatus     AgentBackendStatus?
+  newBackendStatus     AgentBackendStatus?
+  note                 String?
+  createdAt            DateTime            @default(now())
+
+  task AgentSubmissionTask @relation(fields: [taskId], references: [id])
+
+  @@index([taskId])
+  @@map("agent_submission_logs")
+}
+
+model AgentSubmissionScreenshot {
+  id                  String        @id @default(cuid())
+  taskId              String
+  screenshotType      ScreenshotType
+  fileUrl             String
+  visibleToUser       Boolean       @default(true)
+  uploadedByIdentityId String
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  task AgentSubmissionTask @relation(fields: [taskId], references: [id])
+
+  @@index([taskId])
+  @@map("agent_submission_screenshots")
+}
+
+// ============================================================================
+// 订单与权益系统
+// ============================================================================
+
+model Order {
+  id                  String        @id @default(cuid())
+  identityId         String
+  organizationId     String?
+  orderType          OrderType
+  orderTitle         String
+  amount             Int
+  paymentStatus      PaymentStatus @default(pending)
+  createdAt          DateTime      @default(now())
+  paidAt             DateTime?
+  expiredAt          DateTime?
+  relatedStudentName String?
+  relatedEssayTitle String?
+  remarks           String?
+
+  identity     UserIdentity            @relation(fields: [identityId], references: [id])
+  organization Organization?           @relation(fields: [organizationId], references: [id])
+  agentTasks  AgentSubmissionTask[]
+
+  @@index([identityId])
+  @@index([organizationId])
+  @@map("orders")
+}
+
+model Entitlement {
+  id              String           @id @default(cuid())
+  identityId      String
+  entitlementType EntitlementType
+  gradeScope      String[]
+  aiQuota         Int?
+  usedCount       Int              @default(0)
+  expiredAt       DateTime
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  identity UserIdentity @relation(fields: [identityId], references: [id])
+
+  @@index([identityId])
+  @@map("entitlements")
+}
+
+model Membership {
+  id          String           @id @default(cuid())
+  identityId  String
+  memberType  MembershipType
+  gradeScope  String[]
+  validFrom   DateTime
+  validTo     DateTime
+  isLifetime  Boolean          @default(false)
+  status      MembershipStatus @default(active)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  identity UserIdentity @relation(fields: [identityId], references: [id])
+
+  @@index([identityId])
+  @@map("memberships")
+}
+
+// ============================================================================
+// 成长档案系统
+// ============================================================================
+
+model GrowthRecord {
+  id                      String    @id @default(cuid())
+  studentId              String
+  recordType             RecordType
+  relatedSelfSubmissionId String?
+  relatedAgentTaskId     String?
+  title                  String
+  description            String?
+  evidenceUrl           String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@index([studentId])
+  @@map("growth_records")
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
@@ -23,6 +24,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import { MEMBERSHIP_PAGE_VIEW, MEMBERSHIP_CTA_CLICK, trackEvent } from "@/lib/analytics";
 
 // ============================================================================
 // 会员服务定价页面
@@ -102,7 +104,18 @@ function FeeTable({ table, level }: { table: { range: string; fee: number }[]; l
 export default function MembershipPage() {
   const router = useRouter();
 
+  // 页面浏览埋点
+  useEffect(() => {
+    trackEvent(MEMBERSHIP_PAGE_VIEW, { pagePath: "/membership" });
+  }, []);
+
   const handleOrder = (type: string, plan?: string) => {
+    // 会员 CTA 点击埋点
+    trackEvent(MEMBERSHIP_CTA_CLICK, {
+      sourcePage: "/membership",
+      membershipType: type,
+      planType: plan,
+    });
     router.push(`/order?type=${type}&plan=${plan || ""}`);
   };
 

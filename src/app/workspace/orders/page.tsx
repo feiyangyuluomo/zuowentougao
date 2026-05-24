@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useAuthStore } from "@/stores";
 import { canAccessOrdersPage } from "@/lib/permissions/workspace-resource";
 import { getOrdersByIdentityId, formatAmount, ORDER_TYPE_LABELS, PAYMENT_STATUS_LABELS } from "@/lib/mock/orders";
@@ -8,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, User, FileText, Receipt } from "lucide-react";
 import Link from "next/link";
+import { ORDER_PAGE_VIEW, trackEvent } from "@/lib/analytics";
 
 const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
   pending: "bg-yellow-100 text-yellow-800",
@@ -95,13 +97,51 @@ export default function OrdersPage() {
     );
   }
 
+  // 页面浏览埋点
+  useEffect(() => {
+    trackEvent(ORDER_PAGE_VIEW, {
+      orderPageType: "personal",
+      identityType: currentIdentity?.identityType,
+    });
+  }, []);
+
   const orders = getOrdersByIdentityId(currentIdentity.id);
+
+  // 计算总计
+  const totalAmount = orders.reduce((sum, o) => sum + o.amount, 0);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">我的订单</h1>
         <p className="text-gray-500 mt-1">查看您的所有订单记录</p>
+      </div>
+
+      {/* 订单统计概览 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500">订单总数</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <Receipt className="h-5 w-5 text-primary" />
+              <span className="text-2xl font-semibold">{orders.length}</span>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500">消费总额</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-semibold text-primary">
+                {formatAmount(totalAmount)}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {orders.length === 0 ? (

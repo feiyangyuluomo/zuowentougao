@@ -1,13 +1,15 @@
 "use client";
 
+import { useEffect } from "react";
 import { useAuthStore } from "@/stores";
 import { canAccessOrganizationOrdersPage } from "@/lib/permissions/workspace-resource";
 import { getOrdersByOrganizationId, formatAmount, ORDER_TYPE_LABELS, PAYMENT_STATUS_LABELS } from "@/lib/mock/orders";
 import type { Order, PaymentStatus } from "@/lib/mock/orders";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, User, FileText, Receipt, Building2 } from "lucide-react";
+import { Calendar, User, FileText, Receipt } from "lucide-react";
 import Link from "next/link";
+import { ORDER_PAGE_VIEW, trackEvent } from "@/lib/analytics";
 
 const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
   pending: "bg-yellow-100 text-yellow-800",
@@ -106,6 +108,14 @@ export default function OrganizationOrdersPage() {
     );
   }
 
+  // 页面浏览埋点
+  useEffect(() => {
+    trackEvent(ORDER_PAGE_VIEW, {
+      orderPageType: "organization",
+      identityType: currentIdentity?.identityType,
+    });
+  }, []);
+
   const orders = currentIdentity.organizationId
     ? getOrdersByOrganizationId(currentIdentity.organizationId)
     : [];
@@ -121,18 +131,7 @@ export default function OrganizationOrdersPage() {
       </div>
 
       {/* 机构信息概览 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">机构编号</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-primary" />
-              <span className="font-semibold">{currentIdentity.organizationId || "N/A"}</span>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">订单总数</CardTitle>

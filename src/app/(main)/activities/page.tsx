@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuthStore } from "@/stores";
 import { ActivityCard } from "@/components/activities/ActivityCard";
 import { ActivityFilter } from "@/components/activities/ActivityFilter";
 import { EmptyState } from "@/components/common";
 import { filterMockActivities } from "@/lib/mock";
+import { ACTIVITY_LIST_VIEW, trackEvent } from "@/lib/analytics";
 
 export default function ActivitiesPage() {
   const { isMember } = useAuthStore();
@@ -23,6 +24,17 @@ export default function ActivitiesPage() {
   }>({});
 
   const filteredActivities = filterMockActivities(filters);
+
+  // 页面浏览埋点
+  useEffect(() => {
+    trackEvent(ACTIVITY_LIST_VIEW, {
+      keyword: filters.keyword,
+      gradeScope: filters.gradeScope,
+      genre: filters.genre,
+      activityStatus: filters.activityStatus,
+      resultCount: filteredActivities.length,
+    });
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-8">

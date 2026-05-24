@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { useAuthStore } from "@/stores";
 import { Button } from "@/components/ui/button";
@@ -16,9 +17,16 @@ import {
   Star,
   Lock,
 } from "lucide-react";
+import { PAGE_VIEW, AGENT_SUBMISSION_CTA_CLICK, MEMBERSHIP_CTA_CLICK } from "@/lib/analytics";
+import { trackEvent } from "@/lib/analytics";
 
 export default function HomePage() {
   const { isAuthenticated, isMember } = useAuthStore();
+
+  // 页面浏览埋点
+  useEffect(() => {
+    trackEvent(PAGE_VIEW, { pagePath: "/" });
+  }, []);
 
   return (
     <div className="flex flex-col">
@@ -320,7 +328,11 @@ export default function HomePage() {
                   </Button>
                 </Link>
                 <Link href="/membership">
-                  <Button size="lg" variant="outline">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={() => trackEvent(MEMBERSHIP_CTA_CLICK, { sourcePage: "homepage_cta" })}
+                  >
                     <Star className="h-4 w-4 mr-2" />
                     了解会员权益
                   </Button>

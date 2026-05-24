@@ -16,6 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sparkles, Menu, User, LogOut, LayoutDashboard } from "lucide-react";
 import type { IdentityType } from "@/types/common";
+import { LOGOUT_CLICK, IDENTITY_SWITCH, AGENT_SUBMISSION_CTA_CLICK, trackEvent } from "@/lib/analytics";
 
 // 判断是否为运营相关角色
 function isOperatorRole(identityType?: IdentityType): boolean {
@@ -25,11 +26,29 @@ function isOperatorRole(identityType?: IdentityType): boolean {
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthenticated, logout, isMember, currentIdentity } = useAuthStore();
+  const { user, isAuthenticated, logout, isMember, currentIdentity, switchIdentity, identities } = useAuthStore();
 
   const handleLogout = () => {
+    // 退出登录埋点
+    trackEvent(LOGOUT_CLICK, {
+      sourcePage: pathname,
+    });
     logout();
     router.push("/");
+  };
+
+  const handleIdentitySwitch = (newIdentityId: string) => {
+    const oldIdentityType = currentIdentity?.identityType || "guest";
+    const newIdentity = identities.find((i) => i.id === newIdentityId);
+    if (newIdentity) {
+      // 身份切换埋点
+      trackEvent(IDENTITY_SWITCH, {
+        fromIdentityType: oldIdentityType,
+        toIdentityType: newIdentity.identityType,
+        toIdentityId: newIdentityId,
+      });
+      switchIdentity(newIdentityId);
+    }
   };
 
   // 根据角色获取工作台菜单
@@ -85,7 +104,16 @@ export function Header() {
           ))}
           {/* 申请平台代投 CTA */}
           <Link href={AGENT_SUBMISSION_CTA.href}>
-            <Button size="sm" variant="outline" className="border-primary text-primary hover:bg-primary/5">
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-primary text-primary hover:bg-primary/5"
+              onClick={() => {
+                trackEvent(AGENT_SUBMISSION_CTA_CLICK, {
+                  sourcePage: "header_nav",
+                });
+              }}
+            >
               {AGENT_SUBMISSION_CTA.title}
             </Button>
           </Link>

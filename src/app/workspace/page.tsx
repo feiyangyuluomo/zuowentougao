@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect } from "react";
 import { useAuthStore } from "@/stores";
 import { canAccessWorkspace, isOrganizationAdmin, isOrganizationTeacher } from "@/lib/permissions";
 import { getWorkspaceStats, getWorkspaceClasses } from "@/lib/workspace";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Users, BookOpen, FileText, BarChart3, ArrowRight, GraduationCap } from "lucide-react";
+import { WORKSPACE_ENTER, trackEvent } from "@/lib/analytics";
 
 export default function WorkspacePage() {
   const { currentIdentity } = useAuthStore();
@@ -31,6 +33,14 @@ export default function WorkspacePage() {
   const isOrgAdmin = isOrganizationAdmin(currentIdentity);
   const isOrgTeacher = isOrganizationTeacher(currentIdentity);
   const isTeacher = identityType === "teacher";
+
+  // 工作台进入埋点
+  useEffect(() => {
+    trackEvent(WORKSPACE_ENTER, {
+      identityType: identityType || "guest",
+      organizationId: currentIdentity?.organizationId,
+    });
+  }, [identityType, currentIdentity?.organizationId]);
 
   return (
     <div className="space-y-6">

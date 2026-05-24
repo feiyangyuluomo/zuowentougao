@@ -18,6 +18,7 @@ import { ArrowLeft, FileText, Send, Shield, Zap, AlertTriangle, User, LogIn, Plu
 import { MOCK_STUDENTS, createMockStudent } from "@/lib/mock/students";
 import { MOCK_ESSAYS, createMockEssay } from "@/lib/mock/essays";
 import { getMockActivityById } from "@/lib/mock";
+import { AGENT_SUBMISSION_CREATED, trackEvent } from "@/lib/analytics";
 
 function PricingSection() {
   return (
@@ -600,6 +601,15 @@ function ApplicationFlow({
                 <Button
                   className="bg-primary hover:bg-primary/90"
                   disabled={!canProceedStep3}
+                  onClick={() => {
+                    // 埋点：代投申请完成
+                    trackEvent(AGENT_SUBMISSION_CREATED, {
+                      taskId: `task-${Date.now()}`,
+                      essayId: selectedEssayId || "",
+                      activityId: activityId || "",
+                      studentId: selectedStudentId || "",
+                    });
+                  }}
                 >
                   确认并支付 ¥9.9
                 </Button>

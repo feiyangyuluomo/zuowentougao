@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/stores";
@@ -12,6 +13,13 @@ import { Badge } from "@/components/ui/badge";
 import { getMockActivityById } from "@/lib/mock";
 import { canViewSubmissionMethod, canCreateSelfSubmission } from "@/lib/permissions/activity";
 import { ArrowLeft, Bookmark, Share2, Lock, Send, Sparkles } from "lucide-react";
+import {
+  ACTIVITY_DETAIL_VIEW,
+  VIEW_SUBMISSION_METHOD_CLICK,
+  SELF_SUBMISSION_CREATE,
+  AGENT_SUBMISSION_APPLY_CLICK,
+  trackEvent,
+} from "@/lib/analytics";
 
 export default function ActivityDetailPage() {
   const params = useParams();
@@ -21,6 +29,22 @@ export default function ActivityDetailPage() {
   const activity = getMockActivityById(activityId);
   const canViewEmail = canViewSubmissionMethod(currentIdentity, entitlements);
   const canRecordSelfSubmission = canCreateSelfSubmission(currentIdentity, entitlements);
+
+  // 页面浏览埋点
+  useEffect(() => {
+    if (activity) {
+      trackEvent(ACTIVITY_DETAIL_VIEW, {
+        activityId: activity.id,
+        activityTitle: activity.title,
+        publisherId: activity.publisherId,
+        gradeScope: activity.gradeScope,
+        hasPayment: activity.hasPayment,
+        hasCertificate: activity.hasCertificate,
+        hasSampleIssue: activity.hasSampleIssue,
+        publisherType: activity.publisher?.publisherType,
+      });
+    }
+  }, [activity]);
 
   if (!activity) {
     return (
@@ -154,7 +178,15 @@ export default function ActivityDetailPage() {
                 <>
                   {activity.supportSelfSubmission && (
                     <Link href={`/self-submissions/new?activity=${activity.id}`}>
-                      <Button className="w-full gap-2 bg-primary hover:bg-primary/90">
+                      <Button
+                        className="w-full gap-2 bg-primary hover:bg-primary/90"
+                        onClick={() => {
+                          trackEvent(SELF_SUBMISSION_CREATE, {
+                            activityId: activity.id,
+                            activityTitle: activity.title,
+                          });
+                        }}
+                      >
                         <Send className="h-4 w-4" />
                         自主投稿
                       </Button>
@@ -162,7 +194,17 @@ export default function ActivityDetailPage() {
                   )}
                   {activity.supportAgentSubmission && (
                     <Link href={`/agent-submissions/new?activity=${activity.id}`}>
-                      <Button variant="outline" className="w-full gap-2 bg-orange-500 text-white hover:bg-orange-600">
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2 bg-orange-500 text-white hover:bg-orange-600"
+                        onClick={() => {
+                          trackEvent(AGENT_SUBMISSION_APPLY_CLICK, {
+                            activityId: activity.id,
+                            activityTitle: activity.title,
+                            sourcePage: "activity_detail",
+                          });
+                        }}
+                      >
                         <Send className="h-4 w-4" />
                         平台代投
                       </Button>
@@ -180,6 +222,8 @@ export default function ActivityDetailPage() {
               method={activity.submissionMethod}
               format={activity.submissionFormat}
               emailSubjectFormat={activity.emailSubjectFormat}
+              activityId={activity.id}
+              activityTitle={activity.title}
             />
           )}
 

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sparkles, ArrowLeft } from "lucide-react";
+import { LOGIN_SUCCESS, trackEvent } from "@/lib/analytics";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,6 +34,12 @@ export default function LoginPage() {
 
     try {
       await login(phone);
+      // 登录成功埋点
+      trackEvent(LOGIN_SUCCESS, {
+        identityType: "parent", // 默认家长类型
+        loginMethod: "phone",
+        phone,
+      });
       router.push("/");
     } catch (err) {
       setError("登录失败，请重试");
@@ -47,6 +54,12 @@ export default function LoginPage() {
   const handleTestParentLogin = async () => {
     try {
       await login("13800138001");
+      // 登录成功埋点
+      trackEvent(LOGIN_SUCCESS, {
+        identityType: "parent",
+        loginMethod: "test_account",
+        phone: "13800138001",
+      });
       router.push("/");
     } catch (err) {
       setError("登录失败，请重试");
@@ -56,6 +69,12 @@ export default function LoginPage() {
   const handleTestOperatorLogin = async () => {
     try {
       await login("13800138002");
+      // 登录成功埋点
+      trackEvent(LOGIN_SUCCESS, {
+        identityType: "operator",
+        loginMethod: "test_account",
+        phone: "13800138002",
+      });
       router.push("/admin/agent-submissions");
     } catch (err) {
       setError("登录失败，请重试");
@@ -65,6 +84,12 @@ export default function LoginPage() {
   const handleTestTeacherLogin = async () => {
     try {
       await login("13800138003");
+      // 登录成功埋点
+      trackEvent(LOGIN_SUCCESS, {
+        identityType: "teacher",
+        loginMethod: "test_account",
+        phone: "13800138003",
+      });
       router.push("/workspace");
     } catch (err) {
       setError("登录失败，请重试");
@@ -74,6 +99,12 @@ export default function LoginPage() {
   const handleTestOrgAdminLogin = async () => {
     try {
       await login("13800138004");
+      // 登录成功埋点
+      trackEvent(LOGIN_SUCCESS, {
+        identityType: "organization_admin",
+        loginMethod: "test_account",
+        phone: "13800138004",
+      });
       router.push("/workspace");
     } catch (err) {
       setError("登录失败，请重试");

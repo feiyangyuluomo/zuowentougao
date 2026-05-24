@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuthStore } from "@/stores";
 import { MOCK_ESSAYS } from "@/lib/mock/essays";
 import {
@@ -23,6 +23,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { FileText, Zap, AlertCircle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+import {
+  ESSAY_REVIEW_PAGE_VIEW,
+  ESSAY_REVIEW_ENTRY_CLICK,
+  ESSAY_REVIEW_SUBMIT_CLICK,
+  MANUAL_REVIEW_APPLY_CLICK,
+  REVIEW_PAYMENT_CTA_CLICK,
+  trackEvent,
+} from "@/lib/analytics";
 
 /**
  * 作文批改服务页面
@@ -63,6 +71,64 @@ export default function EssayRevisionPage() {
 
   // 费用明细
   const feeTable = getFeeTable(essayLevel);
+
+  // 页面浏览埋点
+  useEffect(() => {
+    trackEvent(ESSAY_REVIEW_PAGE_VIEW, {
+      pagePath: "/essay-revision",
+      reviewType: revisionType,
+    });
+  }, []);
+
+  // 作文选择埋点
+  const handleEssaySelect = (essayId: string) => {
+    setSelectedEssayId(essayId);
+    const essay = MOCK_ESSAYS.find((e) => e.id === essayId);
+    trackEvent(ESSAY_REVIEW_ENTRY_CLICK, {
+      essayId,
+      studentId: "",
+      sourcePage: "/essay-revision",
+      reviewType: revisionType,
+    });
+  };
+
+  // 批改类型切换埋点
+  const handleRevisionTypeChange = (type: "ai" | "manual") => {
+    setRevisionType(type);
+    trackEvent(ESSAY_REVIEW_ENTRY_CLICK, {
+      essayId: selectedEssayId || "",
+      studentId: "",
+      sourcePage: "/essay-revision",
+      reviewType: type,
+    });
+  };
+
+  // 提交批改申请埋点
+  const handleSubmitRevision = () => {
+    if (revisionType === "manual") {
+      trackEvent(MANUAL_REVIEW_APPLY_CLICK, {
+        essayId: selectedEssayId || "",
+        studentId: "",
+        reviewType: "manual",
+      });
+    }
+    trackEvent(ESSAY_REVIEW_SUBMIT_CLICK, {
+      essayId: selectedEssayId || "",
+      studentId: "",
+      reviewType: revisionType,
+      wordCount,
+    });
+  };
+
+  // 支付按钮埋点
+  const handlePaymentClick = () => {
+    trackEvent(REVIEW_PAYMENT_CTA_CLICK, {
+      essayId: selectedEssayId || "",
+      studentId: "",
+      reviewType: revisionType,
+      sourcePage: "/essay-revision",
+    });
+  };
 
   const handleSourceChange = (source: "new" | "existing") => {
     setSourceType(source);
@@ -124,7 +190,7 @@ export default function EssayRevisionPage() {
               {sourceType === "existing" ? (
                 // 已有作文列表
                 <div className="space-y-2">
-                  <Select value={selectedEssayId || ""} onValueChange={setSelectedEssayId}>
+                  <Select value={selectedEssayId || ""} onValueChange={handleEssaySelect}>
                     <SelectTrigger>
                       <SelectValue placeholder="请选择作文" />
                     </SelectTrigger>
@@ -190,7 +256,7 @@ export default function EssayRevisionPage() {
               <div className="grid grid-cols-2 gap-4">
                 <Button
                   variant={revisionType === "ai" ? "default" : "outline"}
-                  onClick={() => setRevisionType("ai")}
+                  onClick={() => handleRevisionTypeChange("ai")}
                   className="h-auto py-4 flex flex-col items-center gap-2"
                 >
                   <Zap className="h-6 w-6 text-yellow-500" />
@@ -199,7 +265,7 @@ export default function EssayRevisionPage() {
                 </Button>
                 <Button
                   variant={revisionType === "manual" ? "default" : "outline"}
-                  onClick={() => setRevisionType("manual")}
+                  onClick={() => handleRevisionTypeChange("manual")}
                   className="h-auto py-4 flex flex-col items-center gap-2"
                 >
                   <FileText className="h-6 w-6 text-blue-500" />
@@ -363,7 +429,15 @@ export default function EssayRevisionPage() {
                         : `基础费¥${manualFee}${rushType !== "none" ? ` × ${rushMultiplier}` : ""}`}
                     </p>
                   </div>
-                  <Button className="w-full" size="lg" disabled={wordCount === 0}>
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    disabled={wordCount === 0}
+                    onClick={() => {
+                      handleSubmitRevision();
+                      handlePaymentClick();
+                    }}
+                  >
                     提交批改申请
                   </Button>
                 </>

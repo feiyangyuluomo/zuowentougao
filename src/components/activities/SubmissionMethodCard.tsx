@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Mail, Globe, MessageSquare, Send, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import type { SubmissionMethod } from "@/types";
+import { VIEW_SUBMISSION_METHOD_CLICK, trackEvent } from "@/lib/analytics";
 
 interface SubmissionMethodCardProps {
   email?: string;
@@ -15,6 +16,8 @@ interface SubmissionMethodCardProps {
   format?: string;
   emailSubjectFormat?: string;
   onCopyEmail?: () => void;
+  activityId?: string;
+  activityTitle?: string;
 }
 
 export function SubmissionMethodCard({
@@ -22,6 +25,9 @@ export function SubmissionMethodCard({
   method,
   format,
   emailSubjectFormat,
+  onCopyEmail,
+  activityId,
+  activityTitle,
 }: SubmissionMethodCardProps) {
   const [copied, setCopied] = useState(false);
 
@@ -29,6 +35,13 @@ export function SubmissionMethodCard({
     if (email) {
       await navigator.clipboard.writeText(email);
       setCopied(true);
+      // 埋点：查看投稿方式
+      trackEvent(VIEW_SUBMISSION_METHOD_CLICK, {
+        activityId: activityId || "",
+        activityTitle: activityTitle || "",
+        submissionMethod: method,
+        isMember: true,
+      });
       setTimeout(() => setCopied(false), 2000);
     }
   };

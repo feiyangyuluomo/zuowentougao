@@ -19,16 +19,33 @@ import {
   Filter,
 } from "lucide-react";
 import Link from "next/link";
-
-// TODO: Replace with actual auth and data
+import { useAuthStore } from "@/stores";
+import { ESSAY_UPLOAD_CLICK, ESSAY_REVIEW_ENTRY_CLICK, trackEvent } from "@/lib/analytics";
 
 export default function EssaysPage() {
+  const { currentIdentity } = useAuthStore();
   const [searchKeyword, setSearchKeyword] = useState("");
   const essays = getMockEssayList();
 
   const filteredEssays = essays.filter((essay) =>
     essay.title.toLowerCase().includes(searchKeyword.toLowerCase())
   );
+
+  const handleUploadClick = () => {
+    trackEvent(ESSAY_UPLOAD_CLICK, {
+      sourcePage: "/essays",
+      identityType: currentIdentity?.identityType,
+    });
+  };
+
+  const handleAiReviewClick = (essayId: string) => {
+    trackEvent(ESSAY_REVIEW_ENTRY_CLICK, {
+      essayId,
+      studentId: "",
+      sourcePage: "/essays",
+      reviewType: "ai",
+    });
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -40,7 +57,7 @@ export default function EssaysPage() {
             管理您的作文作品，支持AI改稿和版本管理
           </p>
         </div>
-        <Link href="/essays/new">
+        <Link href="/essays/new" onClick={handleUploadClick}>
           <Button className="gap-2 bg-primary hover:bg-primary/90">
             <Plus className="h-4 w-4" />
             上传作文
@@ -78,7 +95,7 @@ export default function EssaysPage() {
           className="mt-8"
           action={{
             label: "上传第一篇作文",
-            onClick: () => {},
+            onClick: handleUploadClick,
           }}
         />
       ) : (
@@ -117,7 +134,12 @@ export default function EssaysPage() {
                   <span>{essay.submissionCount}次投稿</span>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1 gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 gap-1"
+                    onClick={() => handleAiReviewClick(essay.id)}
+                  >
                     <Sparkles className="h-3 w-3" />
                     AI改稿
                   </Button>

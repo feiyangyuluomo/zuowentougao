@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores";
 import { AIPromptSection } from "@/components/ai/AIPromptSection";
@@ -18,6 +18,7 @@ import { GRADE_OPTIONS } from "@/constants";
 import { MOCK_AI_ANALYSIS_RESULT, MOCK_AI_RECOMMEND_RESULTS } from "@/lib/mock/ai-results";
 import { createMockEssay } from "@/lib/mock/essays";
 import type { AIAnalysisOutput, AIRecommendResult } from "@/types";
+import { PAGE_VIEW, AI_RECOMMEND_CLICK, AI_REWRITE_CLICK, trackEvent } from "@/lib/analytics";
 
 export default function AIAssistantPage() {
   const router = useRouter();
@@ -29,6 +30,11 @@ export default function AIAssistantPage() {
   const [analysisResult, setAnalysisResult] = useState<AIAnalysisOutput | null>(null);
   const [recommendations, setRecommendations] = useState<AIRecommendResult[]>([]);
   const [showRecommend, setShowRecommend] = useState(false);
+
+  // 页面浏览埋点
+  useEffect(() => {
+    trackEvent(PAGE_VIEW, { pagePath: "/ai-assistant" });
+  }, []);
 
   // 权限检查：需要登录且是会员
   if (!isAuthenticated()) {
@@ -59,14 +65,34 @@ export default function AIAssistantPage() {
     if (!content.trim() && !grade) return;
 
     setIsAnalyzing(true);
+    // AI 改稿点击埋点
+    trackEvent(AI_REWRITE_CLICK, {
+      essayId: "",
+      studentId: "",
+      sourcePage: "/ai-assistant",
+      isPaidUser: true,
+    });
     // 使用 mock 数据模拟 AI 分析
     setTimeout(() => {
       setAnalysisResult(MOCK_AI_ANALYSIS_RESULT);
       setIsAnalyzing(false);
+      // AI 改稿结果查看埋点
+      trackEvent("ai_rewrite_result_view", {
+        essayId: "",
+        studentId: "",
+        sourcePage: "/ai-assistant",
+      });
     }, 1500);
   };
 
   const handleGetRecommendations = () => {
+    // AI 推荐点击埋点
+    trackEvent(AI_RECOMMEND_CLICK, {
+      essayId: "",
+      studentId: "",
+      grade,
+      sourcePage: "/ai-assistant",
+    });
     // 使用 mock 数据模拟 AI 推荐
     setTimeout(() => {
       setRecommendations(MOCK_AI_RECOMMEND_RESULTS);
