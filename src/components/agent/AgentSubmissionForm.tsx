@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AlertTriangle, Check, Send, BookOpen, Calendar, ArrowLeft } from "lucide-react";
+import { AlertTriangle, Check, Send, BookOpen, Calendar, ArrowLeft, Upload } from "lucide-react";
 import Link from "next/link";
 import type { Activity } from "@/types";
 
@@ -163,7 +163,19 @@ export function AgentSubmissionForm({ activity, onSuccess }: AgentSubmissionForm
 
           {/* 作文选择 */}
           <div>
-            <Label htmlFor="essaySelect">选择要投稿的作文</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="essaySelect">选择要投稿的作文</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="gap-1 text-primary hover:text-primary/80"
+                onClick={() => router.push("/essays/new")}
+              >
+                <Upload className="h-4 w-4" />
+                上传新作文
+              </Button>
+            </div>
             <Select value={selectedEssayId} onValueChange={setSelectedEssayId}>
               <SelectTrigger className="mt-2">
                 <SelectValue placeholder="请选择作文" />
@@ -181,7 +193,7 @@ export function AgentSubmissionForm({ activity, onSuccess }: AgentSubmissionForm
               </SelectContent>
             </Select>
             <p className="text-xs text-gray-400 mt-1">
-              请先在"我的作文"中创建作文
+              没有作文？点击上方"上传新作文"创建
             </p>
           </div>
 

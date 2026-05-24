@@ -2,19 +2,42 @@
 // AI 分析结果展示区组件
 // ============================================================================
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sparkles, BookOpen, AlertTriangle, CheckCircle, ArrowRight } from "lucide-react";
+import { Sparkles, BookOpen, AlertTriangle, CheckCircle, ArrowRight, Save } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type { AIAnalysisOutput } from "@/types";
 
 interface AIPromptSectionProps {
   analysis: AIAnalysisOutput | null;
   isLoading?: boolean;
   onStartRecommend?: () => void;
+  essayContent?: string;
+  onSaveToEssays?: (title: string) => void;
 }
 
-export function AIPromptSection({ analysis, isLoading, onStartRecommend }: AIPromptSectionProps) {
+export function AIPromptSection({ analysis, isLoading, onStartRecommend, essayContent, onSaveToEssays }: AIPromptSectionProps) {
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [essayTitle, setEssayTitle] = useState("");
+
+  const handleSaveToEssays = () => {
+    if (essayTitle.trim() && onSaveToEssays) {
+      onSaveToEssays(essayTitle.trim());
+      setShowSaveDialog(false);
+      setEssayTitle("");
+    }
+  };
   if (isLoading) {
     return (
       <Card className="border-2 border-purple-100">
@@ -157,15 +180,63 @@ export function AIPromptSection({ analysis, isLoading, onStartRecommend }: AIPro
 
         {/* 操作按钮 */}
         {onStartRecommend && (
-          <Button
-            onClick={onStartRecommend}
-            className="w-full gap-2 bg-primary hover:bg-primary/90"
-          >
-            <Sparkles className="h-4 w-4" />
-            获取活动推荐
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowSaveDialog(true)}
+              variant="outline"
+              className="flex-1 gap-2"
+              disabled={!essayContent}
+            >
+              <Save className="h-4 w-4" />
+              保存到我的作文
+            </Button>
+            <Button
+              onClick={onStartRecommend}
+              className="flex-1 gap-2 bg-primary hover:bg-primary/90"
+            >
+              <Sparkles className="h-4 w-4" />
+              获取活动推荐
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
         )}
+
+        {/* 保存到作文弹窗 */}
+        <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>保存到我的作文</DialogTitle>
+              <DialogDescription>
+                为您的作文设置一个标题，然后保存到"我的作文"中
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="essayTitle">作文标题</Label>
+                <Input
+                  id="essayTitle"
+                  placeholder="请输入作文标题"
+                  value={essayTitle}
+                  onChange={(e) => setEssayTitle(e.target.value)}
+                />
+              </div>
+              {essayContent && (
+                <div className="p-3 bg-gray-50 rounded-lg border">
+                  <div className="text-xs text-gray-500 mb-1">作文内容预览</div>
+                  <p className="text-sm text-gray-700 line-clamp-3">{essayContent}</p>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+                取消
+              </Button>
+              <Button onClick={handleSaveToEssays} disabled={!essayTitle.trim()}>
+                保存
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );

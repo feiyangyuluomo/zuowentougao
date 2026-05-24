@@ -77,6 +77,12 @@ export default function AIAssistantPage() {
     router.push(`/activities/${activityId}`);
   };
 
+  const handleSaveToEssays = (title: string) => {
+    // TODO: 调用保存作文的接口
+    console.log("保存作文:", title, content.slice(0, 100));
+    alert(`作文"${title}"已保存到"我的作文"中`);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
@@ -194,6 +200,8 @@ export default function AIAssistantPage() {
               analysis={analysisResult}
               isLoading={isAnalyzing}
               onStartRecommend={handleGetRecommendations}
+              essayContent={content}
+              onSaveToEssays={handleSaveToEssays}
             />
 
             {/* AI Recommendations */}
