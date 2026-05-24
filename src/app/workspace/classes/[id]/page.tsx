@@ -2,9 +2,10 @@
 
 import { useParams } from "next/navigation";
 import { useAuthStore } from "@/stores";
-import { canAccessWorkspace, canAccessClass } from "@/lib/permissions";
+import { canAccessWorkspace, canAccessClass, isOrganizationAdmin } from "@/lib/permissions";
 import { getMockClassById } from "@/lib/mock/classes";
-import { getMockStudentsByOwner } from "@/lib/mock/students";
+import { getMockStudentsByOwner, getMockStudentsByOrganization } from "@/lib/mock/students";
+import type { Student } from "@/types/student";
 import { AccessDenied } from "@/components/common/AccessDenied";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,8 +34,17 @@ export default function ClassDetailPage() {
   // 获取班级信息
   const cls = getMockClassById(classId);
 
-  // 获取班级学生（这里简化处理，实际应按班级关联学生）
-  const students = getMockStudentsByOwner(identityId);
+  // 获取班级学生：按 classId 过滤
+  let classStudents: Student[] = [];
+  if (isOrganizationAdmin(currentIdentity) && currentIdentity?.organizationId) {
+    // 机构管理员：获取机构下该班级的所有学生
+    classStudents = getMockStudentsByOrganization(currentIdentity.organizationId)
+      .filter((s: Student) => s.classId === classId);
+  } else if (identityType === "teacher") {
+    // 老师：获取自己拥有且属于该班级的学生
+    classStudents = getMockStudentsByOwner(identityId)
+      .filter((s: Student) => s.classId === classId);
+  }
 
   if (!cls) {
     return (
@@ -71,7 +81,7 @@ export default function ClassDetailPage() {
             <p className="text-gray-500 mt-1">
               {cls.grade ? `年级：${cls.grade}` : "未设置年级"}
               <span className="mx-2">•</span>
-              {students.length} 名学生
+              {classStudents.length} 名学生
             </p>
           </div>
         </div>
@@ -98,7 +108,7 @@ export default function ClassDetailPage() {
                 <GraduationCap className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-semibold">{students.length}</p>
+                <p className="text-2xl font-semibold">{classStudents.length}</p>
                 <p className="text-sm text-gray-500">学生数量</p>
               </div>
             </div>
@@ -141,7 +151,7 @@ export default function ClassDetailPage() {
           <CardDescription>查看班级内的所有学生</CardDescription>
         </CardHeader>
         <CardContent>
-          {students.length === 0 ? (
+          {classStudents.length === 0 ? (
             <div className="text-center py-12">
               <Users className="h-12 w-12 text-gray-300 mx-auto" />
               <h3 className="mt-4 text-lg font-medium text-gray-900">暂无学生</h3>
@@ -167,7 +177,7 @@ export default function ClassDetailPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {students.map((student) => (
+                {classStudents.map((student) => (
                   <TableRow key={student.id}>
                     <TableCell className="font-medium">{student.studentName}</TableCell>
                     <TableCell className="text-gray-500">{student.school || "-"}</TableCell>
