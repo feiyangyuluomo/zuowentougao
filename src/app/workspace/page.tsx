@@ -2,8 +2,7 @@
 
 import { useAuthStore } from "@/stores";
 import { canAccessWorkspace, isOrganizationAdmin, isOrganizationTeacher } from "@/lib/permissions";
-import { getMockClassesByTeacher } from "@/lib/mock/classes";
-import { getMockStudentsByOwner } from "@/lib/mock/students";
+import { getWorkspaceStats, getWorkspaceClasses } from "@/lib/workspace";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -27,20 +26,10 @@ export default function WorkspacePage() {
   }
 
   const identityType = currentIdentity?.identityType;
-  const identityId = currentIdentity?.id || "";
 
-  // 获取相关数据
-  const classes = identityType === "teacher" || identityType === "organization_admin"
-    ? getMockClassesByTeacher(identityId)
-    : [];
-  const students = getMockStudentsByOwner(identityId);
-
-  const stats = {
-    classCount: classes.length,
-    studentCount: students.length,
-    essayCount: students.reduce((sum, s) => sum + (s as any).essayCount || 0, 0),
-    submissionCount: students.reduce((sum, s) => sum + (s as any).submissionCount || 0, 0),
-  };
+  // 使用数据层获取统计数据
+  const stats = getWorkspaceStats(currentIdentity);
+  const classes = getWorkspaceClasses(currentIdentity);
 
   const isOrgAdmin = isOrganizationAdmin(currentIdentity);
   const isOrgTeacher = isOrganizationTeacher(currentIdentity);

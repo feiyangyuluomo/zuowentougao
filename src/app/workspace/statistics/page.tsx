@@ -2,11 +2,10 @@
 
 import { useAuthStore } from "@/stores";
 import { isOrganizationAdmin } from "@/lib/permissions";
-import { getMockOrganizationById, getMockClassesByOrganization } from "@/lib/mock/classes";
-import { getMockStudentsByOwner } from "@/lib/mock/students";
+import { getWorkspaceStats, getWorkspaceClasses } from "@/lib/workspace";
+import { getMockOrganizationById } from "@/lib/mock/classes";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { BarChart3, Users, GraduationCap, BookOpen, FileText, TrendingUp, ArrowLeft, Download } from "lucide-react";
 import Link from "next/link";
 
@@ -48,16 +47,16 @@ export default function StatisticsPage() {
     );
   }
 
-  const classes = orgId ? getMockClassesByOrganization(orgId) : [];
-  const students = getMockStudentsByOwner(currentIdentity?.id || "");
+  // 使用数据层获取统计数据
+  const stats = getWorkspaceStats(currentIdentity);
+  const classes = getWorkspaceClasses(currentIdentity);
 
   // 统计数据
-  const stats = {
-    totalStudents: students.length,
-    totalClasses: classes.length,
-    totalEssays: students.reduce((sum, s) => sum + (s as any).essayCount || 0, 0),
-    totalSubmissions: students.reduce((sum, s) => sum + (s as any).submissionCount || 0, 0),
-    publishedCount: students.reduce((sum, s) => sum + (s as any).publishedCount || 0, 0),
+  const statsData = {
+    totalStudents: stats.studentCount,
+    totalClasses: stats.classCount,
+    totalEssays: stats.essayCount,
+    totalSubmissions: stats.submissionCount,
   };
 
   return (
@@ -90,7 +89,7 @@ export default function StatisticsPage() {
                 <GraduationCap className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-semibold">{stats.totalStudents}</p>
+                <p className="text-2xl font-semibold">{statsData.totalStudents}</p>
                 <p className="text-sm text-gray-500">学生总数</p>
               </div>
             </div>
@@ -104,7 +103,7 @@ export default function StatisticsPage() {
                 <Users className="h-6 w-6 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-semibold">{stats.totalClasses}</p>
+                <p className="text-2xl font-semibold">{statsData.totalClasses}</p>
                 <p className="text-sm text-gray-500">班级总数</p>
               </div>
             </div>
@@ -118,7 +117,7 @@ export default function StatisticsPage() {
                 <BookOpen className="h-6 w-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-2xl font-semibold">{stats.totalEssays}</p>
+                <p className="text-2xl font-semibold">{statsData.totalEssays}</p>
                 <p className="text-sm text-gray-500">作文总数</p>
               </div>
             </div>
@@ -132,7 +131,7 @@ export default function StatisticsPage() {
                 <FileText className="h-6 w-6 text-orange-600" />
               </div>
               <div>
-                <p className="text-2xl font-semibold">{stats.totalSubmissions}</p>
+                <p className="text-2xl font-semibold">{statsData.totalSubmissions}</p>
                 <p className="text-sm text-gray-500">投稿总数</p>
               </div>
             </div>

@@ -86,3 +86,65 @@ export function isOrganizationTeacher(identity: UserIdentity | null): boolean {
 export function isParent(identity: UserIdentity | null): boolean {
   return identity?.identityType === "parent";
 }
+
+/**
+ * 检查是否可以访问学生详情
+ */
+export function canAccessStudent(identity: UserIdentity | null, studentOwnerId: string): boolean {
+  if (!identity) return false;
+
+  // 机构管理员可以访问机构下所有学生
+  if (isOrganizationAdmin(identity)) {
+    return true; // TODO: 应该检查学生是否属于该机构
+  }
+
+  // 机构老师只能访问自己负责的学生
+  if (isOrganizationTeacher(identity)) {
+    return identity.id === studentOwnerId;
+  }
+
+  // 个人老师只能访问自己的学生
+  if (identity.identityType === "teacher") {
+    return identity.id === studentOwnerId;
+  }
+
+  return false;
+}
+
+/**
+ * 检查是否可以访问班级详情
+ */
+export function canAccessClass(identity: UserIdentity | null, classId: string): boolean {
+  if (!identity) return false;
+
+  // 机构管理员可以访问机构下所有班级
+  if (isOrganizationAdmin(identity)) {
+    return true; // TODO: 应该检查班级是否属于该机构
+  }
+
+  // 个人老师只能访问自己创建的班级
+  if (identity.identityType === "teacher") {
+    return true; // TODO: 应该检查班级是否属于该老师
+  }
+
+  return false;
+}
+
+/**
+ * 检查是否可以访问作文
+ */
+export function canAccessEssay(identity: UserIdentity | null, essayId: string): boolean {
+  if (!identity) return false;
+
+  // 机构管理员可以访问机构下所有作文
+  if (isOrganizationAdmin(identity)) {
+    return true;
+  }
+
+  // 机构老师和 personal 老师需要检查作文归属
+  if (isOrganizationTeacher(identity) || identity.identityType === "teacher") {
+    return true; // TODO: 应该检查作文是否属于该老师的学生
+  }
+
+  return false;
+}
