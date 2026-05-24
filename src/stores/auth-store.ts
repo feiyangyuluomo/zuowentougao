@@ -10,56 +10,8 @@ import type {
   Entitlement,
   Membership,
 } from "@/types";
-
-// ============================================================================
-// Mock 权益数据
-// ============================================================================
-
-// 模拟会员权益
-const MOCK_ENTITLEMENTS: Entitlement[] = [
-  {
-    id: "ent-001",
-    identityId: "id-001",
-    entitlementType: "view_activity_detail",
-    gradeScope: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
-    expiredAt: new Date("2026-12-31"),
-  },
-  {
-    id: "ent-002",
-    identityId: "id-001",
-    entitlementType: "view_submission_email",
-    gradeScope: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
-    expiredAt: new Date("2026-12-31"),
-  },
-  {
-    id: "ent-003",
-    identityId: "id-001",
-    entitlementType: "ai_rewrite",
-    aiQuota: 10,
-    expiredAt: new Date("2026-12-31"),
-  },
-  {
-    id: "ent-004",
-    identityId: "id-001",
-    entitlementType: "ai_recommend",
-    aiQuota: 20,
-    expiredAt: new Date("2026-12-31"),
-  },
-];
-
-// 模拟会员信息
-const MOCK_MEMBERSHIP: Membership = {
-  id: "mem-001",
-  identityId: "id-001",
-  membershipType: "yearly",
-  gradeScope: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
-  validFrom: new Date("2025-01-01"),
-  validTo: new Date("2026-12-31"),
-  isLifetime: false,
-  status: "active",
-  createdAt: new Date("2025-01-01"),
-  updatedAt: new Date("2025-01-01"),
-};
+import { getMockAccountByPhone, getMockIdentitiesByPhone } from "@/lib/mock/accounts";
+import { getEntitlementsByIdentityId, getMembershipByIdentityId, isNoEntitlementIdentity } from "@/lib/mock/entitlements";
 
 // 游客权益（无权益）
 const EMPTY_ENTITLEMENTS: Entitlement[] = [];
@@ -95,6 +47,18 @@ interface AuthStore {
   getMembership: () => Membership | null;
 }
 
+// 内部函数：根据身份加载权益和会员信息
+function loadEntitlementsForIdentity(identity: UserIdentity): { entitlements: Entitlement[], membership: Membership | null } {
+  // 运营人员和管理员没有权益
+  if (isNoEntitlementIdentity(identity.identityType)) {
+    return { entitlements: EMPTY_ENTITLEMENTS, membership: null };
+  }
+  return {
+    entitlements: getEntitlementsByIdentityId(identity.id),
+    membership: getMembershipByIdentityId(identity.id),
+  };
+}
+
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
@@ -111,66 +75,60 @@ export const useAuthStore = create<AuthStore>()(
       login: async (phone?: string, wxCode?: string) => {
         set({ isLoading: true });
         try {
-          // 根据手机号设置用户昵称
-          const nicknames: Record<string, string> = {
-            "13800138001": "付费家长小明",
-            "13800138002": "运营小王",
-            "13800138003": "张老师",
-            "13800138004": "李管理员",
-          };
+          // 根据手机号获取账号信息
+          const account = getMockAccountByPhone(phone || "13800138000");
+          const mockNickname = account?.nickname || "游客";
+          const mockUserId = account?.userId || `user-${Date.now()}`;
+
           const mockUser: User = {
-            id: "user-001",
-            nickname: nicknames[phone || "13800138000"] || "游客",
+            id: mockUserId,
+            nickname: mockNickname,
             phone: phone || "13800138000",
-            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=user-001",
+            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${mockUserId}`,
             status: "active",
             createdAt: new Date(),
             updatedAt: new Date(),
           };
 
-          // 根据手机号判断身份类型
-          const isOperator = phone === "13800138002";
-          const isTeacher = phone === "13800138003";
-          const isOrgAdmin = phone === "13800138004";
+          // 根据手机号获取身份列表
+          const mockIdentities = getMockIdentitiesByPhone(phone || "13800138000");
 
-          // 确定身份类型
-          let identityType: "parent" | "operator" | "teacher" | "organization_admin";
-          if (isOperator) {
-            identityType = "operator";
-          } else if (isTeacher) {
-            identityType = "teacher";
-          } else if (isOrgAdmin) {
-            identityType = "organization_admin";
-          } else {
-            identityType = "parent";
-          }
+          // 如果没有身份，创建一个默认身份
+          if (mockIdentities.length === 0) {
+            const isOperator = phone === "13800138002";
+            const isTeacher = phone === "13800138003";
+            const isOrgAdmin = phone === "13800138004";
 
-          const mockIdentities: UserIdentity[] = [
-            {
-              id: isOperator
-                ? "id-operator-001"
-                : isTeacher
-                  ? "id-teacher-001"
-                  : isOrgAdmin
-                    ? "id-org-admin-001"
-                    : "id-001",
+            let identityType: "parent" | "operator" | "teacher" | "organization_admin";
+            if (isOperator) {
+              identityType = "operator";
+            } else if (isTeacher) {
+              identityType = "teacher";
+            } else if (isOrgAdmin) {
+              identityType = "organization_admin";
+            } else {
+              identityType = "parent";
+            }
+
+            const defaultIdentity: UserIdentity = {
+              id: `id-${identityType}-${Date.now()}`,
               userId: mockUser.id,
               identityType,
               organizationId: isOrgAdmin ? "org-001" : undefined,
               status: "active",
               createdAt: new Date(),
               updatedAt: new Date(),
-            },
-          ];
+            };
+            mockIdentities.push(defaultIdentity);
+          }
 
-          // 运营人员没有会员权益
-          const entitlements = isOperator ? [] : MOCK_ENTITLEMENTS;
-          const membership = isOperator ? null : MOCK_MEMBERSHIP;
+          const firstIdentity = mockIdentities[0];
+          const { entitlements, membership } = loadEntitlementsForIdentity(firstIdentity);
 
           set({
             user: mockUser,
             identities: mockIdentities,
-            currentIdentity: mockIdentities[0],
+            currentIdentity: firstIdentity,
             entitlements,
             membership,
             _isAuthenticated: true,
@@ -211,8 +169,13 @@ export const useAuthStore = create<AuthStore>()(
         const { identities } = get();
         const newIdentity = identities.find((i) => i.id === identityId);
         if (newIdentity) {
-          set({ currentIdentity: newIdentity });
-          // TODO: 刷新新身份的权益和会员信息
+          // 重新加载新身份的权益和会员信息
+          const { entitlements, membership } = loadEntitlementsForIdentity(newIdentity);
+          set({
+            currentIdentity: newIdentity,
+            entitlements,
+            membership,
+          });
         }
       },
 

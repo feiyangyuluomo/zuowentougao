@@ -24,18 +24,54 @@ function isAdminOrOperator(identity: UserIdentity | null): boolean {
 }
 
 /**
+ * 检查是否是家长或个人老师（按 ownerIdentityId 归属）
+ */
+function isParentOrTeacher(identity: UserIdentity): boolean {
+  return ["parent", "teacher"].includes(identity.identityType);
+}
+
+/**
+ * 获取身份对应的学生列表
+ */
+function getStudentsForIdentity(identity: UserIdentity): Student[] {
+  const orgId = identity.organizationId;
+
+  if (isAdminOrOperator(identity)) {
+    // admin/operator 访问全部 - 这里不做限制，由页面层处理
+    return [];
+  }
+
+  if (isOrganizationAdmin(identity) && orgId) {
+    // 机构管理员：获取机构下所有学生
+    return getMockStudentsByOrganization(orgId);
+  }
+
+  if (isOrganizationTeacher(identity)) {
+    // 机构老师：获取授权班级的学生（按 ownerIdentityId 关联）
+    return getMockStudentsByOwner(identity.id);
+  }
+
+  if (isParentOrTeacher(identity)) {
+    // 家长或个人老师：获取自己名下的学生
+    return getMockStudentsByOwner(identity.id);
+  }
+
+  return [];
+}
+
+/**
  * 检查学生是否属于该身份
  */
 function isStudentOwnedByIdentity(student: Student | null, identity: UserIdentity): boolean {
   if (!student) return false;
 
-  // 机构管理员检查
+  if (isAdminOrOperator(identity)) return true;
+
   if (isOrganizationAdmin(identity)) {
     return student.organizationId === identity.organizationId;
   }
 
-  // 机构老师和个人老师检查
-  if (isOrganizationTeacher(identity) || identity.identityType === "teacher") {
+  if (isOrganizationTeacher(identity) || isParentOrTeacher(identity)) {
     return student.ownerIdentityId === identity.id;
   }
 
@@ -57,22 +93,9 @@ export function canAccessStudent(identity: UserIdentity | null, studentId: strin
   // admin/operator 允许全部访问
   if (isAdminOrOperator(identity)) return true;
 
-  // 获取学生信息
-  const students = getMockStudentsByOwner(identity.id);
-  const student = students.find((s: Student) => s.id === studentId) || null;
-
-  // 机构管理员检查
-  if (isOrganizationAdmin(identity)) {
-    const orgStudents = getMockStudentsByOrganization(identity.organizationId || "");
-    return orgStudents.some((s: Student) => s.id === studentId);
-  }
-
-  // 机构老师和个人老师：只能访问自己的学生
-  if (isOrganizationTeacher(identity) || identity.identityType === "teacher") {
-    return students.some((s: Student) => s.id === studentId);
-  }
-
-  return false;
+  // 获取身份对应的学生列表
+  const students = getStudentsForIdentity(identity);
+  return students.some((s: Student) => s.id === studentId);
 }
 
 /**
@@ -98,6 +121,12 @@ export function canAccessClass(identity: UserIdentity | null, classId: string): 
     return teacherClasses.some((c) => c.id === classId);
   }
 
+  // 机构老师检查（授权班级）
+  if (isOrganizationTeacher(identity)) {
+    const teacherClasses = getMockClassesByTeacher(identity.id);
+    return teacherClasses.some((c) => c.id === classId);
+  }
+
   return false;
 }
 
@@ -116,21 +145,11 @@ export function canAccessEssay(identity: UserIdentity | null, essayId: string): 
   const essay = MOCK_ESSAYS.find((e) => e.id === essayId);
   if (!essay) return false;
 
-  // 机构管理员检查作文所属学生是否属于该机构
-  if (isOrganizationAdmin(identity) && identity.organizationId) {
-    const orgStudents = getMockStudentsByOrganization(identity.organizationId);
-    const orgStudentIds = new Set(orgStudents.map((s: Student) => s.id));
-    return orgStudentIds.has(essay.studentId);
-  }
+  // 获取身份对应的学生列表
+  const students = getStudentsForIdentity(identity);
+  const studentIds = new Set(students.map((s: Student) => s.id));
 
-  // 机构老师和个人老师：检查作文是否属于自己的学生
-  if (isOrganizationTeacher(identity) || identity.identityType === "teacher") {
-    const teacherStudents = getMockStudentsByOwner(identity.id);
-    const teacherStudentIds = new Set(teacherStudents.map((s: Student) => s.id));
-    return teacherStudentIds.has(essay.studentId);
-  }
-
-  return false;
+  return studentIds.has(essay.studentId);
 }
 
 /**
@@ -148,21 +167,11 @@ export function canAccessWorkspaceSubmission(identity: UserIdentity | null, subm
   const submission = selfSubmissionsStore.find((s) => s.id === submissionId);
   if (!submission) return false;
 
-  // 机构管理员检查
-  if (isOrganizationAdmin(identity) && identity.organizationId) {
-    const orgStudents = getMockStudentsByOrganization(identity.organizationId);
-    const orgStudentIds = new Set(orgStudents.map((s: Student) => s.id));
-    return orgStudentIds.has(submission.studentId);
-  }
+  // 获取身份对应的学生列表
+  const students = getStudentsForIdentity(identity);
+  const studentIds = new Set(students.map((s: Student) => s.id));
 
-  // 机构老师和个人老师：检查投稿是否属于自己的学生
-  if (isOrganizationTeacher(identity) || identity.identityType === "teacher") {
-    const teacherStudents = getMockStudentsByOwner(identity.id);
-    const teacherStudentIds = new Set(teacherStudents.map((s: Student) => s.id));
-    return teacherStudentIds.has(submission.studentId);
-  }
-
-  return false;
+  return studentIds.has(submission.studentId);
 }
 
 /**
@@ -180,19 +189,9 @@ export function canAccessAgentSubmission(identity: UserIdentity | null, taskId: 
   const task = getMockAgentSubmissions().find((t) => t.id === taskId);
   if (!task) return false;
 
-  // 机构管理员检查
-  if (isOrganizationAdmin(identity) && identity.organizationId) {
-    const orgStudents = getMockStudentsByOrganization(identity.organizationId);
-    const orgStudentIds = new Set(orgStudents.map((s: Student) => s.id));
-    return orgStudentIds.has(task.studentId);
-  }
+  // 获取身份对应的学生列表
+  const students = getStudentsForIdentity(identity);
+  const studentIds = new Set(students.map((s: Student) => s.id));
 
-  // 机构老师和个人老师：检查代投是否属于自己的学生
-  if (isOrganizationTeacher(identity) || identity.identityType === "teacher") {
-    const teacherStudents = getMockStudentsByOwner(identity.id);
-    const teacherStudentIds = new Set(teacherStudents.map((s: Student) => s.id));
-    return teacherStudentIds.has(task.studentId);
-  }
-
-  return false;
+  return studentIds.has(task.studentId);
 }
