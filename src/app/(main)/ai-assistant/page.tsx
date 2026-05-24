@@ -103,8 +103,6 @@ export default function AIAssistantPage() {
     alert(`作文"${finalTitle}"已保存到"我的作文"中`);
     // 清空标题
     setTitle("");
-    // 跳转到我的作文页面
-    router.push("/essays");
   };
 
   return (
