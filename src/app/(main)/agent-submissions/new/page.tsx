@@ -1,38 +1,395 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useAuthStore } from "@/stores";
-import { AgentSubmissionForm } from "@/components/agent/AgentSubmissionForm";
-import { PaywallBlock } from "@/components/common";
-import { getMockActivityById } from "@/lib/mock";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Check } from "lucide-react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText, Send, Shield, Zap, AlertTriangle, User, LogIn, Plus, UserPlus } from "lucide-react";
+import { MOCK_STUDENTS } from "@/lib/mock/students";
+import { MOCK_ESSAYS } from "@/lib/mock/essays";
 
-function NewAgentSubmissionContent() {
-  const searchParams = useSearchParams();
-  const activityId = searchParams.get("activity");
-  const { isAuthenticated } = useAuthStore();
-
-  // 权限检查：需要登录
-  if (!isAuthenticated()) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <PaywallBlock
-          title="登录后申请代投"
-          description="平台代投功能需要登录后才能使用"
-          action={{ label: "立即登录", href: "/login" }}
-        />
+function PricingSection() {
+  return (
+    <div className="max-w-2xl mx-auto text-center space-y-8">
+      <div className="space-y-4">
+        <Badge className="mb-2 bg-primary">平台代投服务</Badge>
+        <h1 className="text-3xl font-bold text-gray-900">作文代投服务</h1>
+        <p className="text-gray-600">
+          专业团队协助投稿，省时省力，提升投稿成功率
+        </p>
       </div>
-    );
-  }
 
-  // 获取活动信息
-  const activity = activityId ? getMockActivityById(activityId) : null;
+      {/* 价格卡片 */}
+      <Card className="border-2 border-primary">
+        <CardHeader className="text-center pb-2">
+          <Badge className="mb-2 bg-primary">限时优惠</Badge>
+          <CardTitle className="text-2xl">平台代投</CardTitle>
+          <CardDescription>单次服务</CardDescription>
+        </CardHeader>
+        <CardContent className="text-center">
+          <div className="mb-4">
+            <span className="text-5xl font-bold text-primary">¥9.9</span>
+            <span className="text-gray-500">/次/篇</span>
+          </div>
+          <p className="text-sm text-gray-500 mb-6">
+            一次多篇 = 9.9元 × 篇数
+          </p>
+          <ul className="text-left space-y-3 text-sm mb-6 max-w-xs mx-auto">
+            <li className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-600" />
+              <span>专业团队协助投稿</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-600" />
+              <span>节省时间和精力</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-600" />
+              <span>提升投稿成功率</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-600" />
+              <span>全程追踪投稿状态</span>
+            </li>
+          </ul>
+          <div className="space-y-3">
+            <Link href="/login">
+              <Button size="lg" className="w-full bg-primary hover:bg-primary/90">
+                <LogIn className="h-4 w-4 mr-2" />
+                登录后申请代投
+              </Button>
+            </Link>
+            <p className="text-xs text-gray-500">
+              登录后将引导您完成代投申请流程
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 其他服务入口 */}
+      <div className="flex justify-center gap-4">
+        <Link href="/membership">
+          <Button variant="outline">查看更多服务</Button>
+        </Link>
+        <Link href="/activities">
+          <Button variant="outline">浏览征稿活动</Button>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function StudentSelectOrCreate({
+  selectedStudentId,
+  onSelect,
+  identityId,
+}: {
+  selectedStudentId: string | null;
+  onSelect: (id: string) => void;
+  identityId: string;
+}) {
+  const [isCreating, setIsCreating] = useState(false);
+  const [newStudent, setNewStudent] = useState({
+    studentName: "",
+    school: "",
+    className: "",
+    phone: "",
+    guideTeacher: "",
+    address: "",
+  });
+
+  // 获取当前身份下的学生
+  const students = MOCK_STUDENTS.filter((s) => s.ownerIdentityId === identityId);
+
+  const handleCreateStudent = () => {
+    // TODO: 创建学生逻辑
+    console.log("创建学生:", newStudent);
+    setIsCreating(false);
+  };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <Label>选择学生</Label>
+        <Dialog open={isCreating} onOpenChange={setIsCreating}>
+          <DialogTrigger asChild>
+            <Button variant="ghost" size="sm" className="gap-1">
+              <UserPlus className="h-4 w-4" />
+              新增学生
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>创建学生资料</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+              <div>
+                <Label htmlFor="studentName">学生姓名 *</Label>
+                <Input
+                  id="studentName"
+                  value={newStudent.studentName}
+                  onChange={(e) => setNewStudent({ ...newStudent, studentName: e.target.value })}
+                  placeholder="请输入学生姓名"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="school">学校</Label>
+                <Input
+                  id="school"
+                  value={newStudent.school}
+                  onChange={(e) => setNewStudent({ ...newStudent, school: e.target.value })}
+                  placeholder="请输入学校名称"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="className">班级</Label>
+                <Input
+                  id="className"
+                  value={newStudent.className}
+                  onChange={(e) => setNewStudent({ ...newStudent, className: e.target.value })}
+                  placeholder="如：三年级一班"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="phone">联系电话</Label>
+                <Input
+                  id="phone"
+                  value={newStudent.phone}
+                  onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })}
+                  placeholder="请输入联系电话"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="guideTeacher">指导老师</Label>
+                <Input
+                  id="guideTeacher"
+                  value={newStudent.guideTeacher}
+                  onChange={(e) => setNewStudent({ ...newStudent, guideTeacher: e.target.value })}
+                  placeholder="请输入指导老师姓名"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="address">通讯地址</Label>
+                <Input
+                  id="address"
+                  value={newStudent.address}
+                  onChange={(e) => setNewStudent({ ...newStudent, address: e.target.value })}
+                  placeholder="请输入通讯地址"
+                  className="mt-1"
+                />
+              </div>
+              <Button
+                className="w-full"
+                onClick={handleCreateStudent}
+                disabled={!newStudent.studentName}
+              >
+                确认创建
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {students.length > 0 ? (
+        <div className="grid grid-cols-2 gap-3">
+          {students.map((student) => (
+            <div
+              key={student.id}
+              className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                selectedStudentId === student.id
+                  ? "border-primary bg-primary/5"
+                  : "border-gray-200 hover:border-primary/50"
+              }`}
+              onClick={() => onSelect(student.id)}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <User className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="font-medium">{student.studentName}</p>
+                  <p className="text-xs text-gray-500">
+                    {student.school || "未填写学校"} {student.classId ? `| ${student.classId}` : ""}
+                  </p>
+                  {student.phone && (
+                    <p className="text-xs text-gray-400">{student.phone}</p>
+                  )}
+                </div>
+                {selectedStudentId === student.id && (
+                  <Check className="h-5 w-5 text-primary ml-auto" />
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-8 text-gray-500">
+          <User className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+          <p>暂无学生资料</p>
+          <p className="text-sm">请点击"新增学生"创建</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EssaySelectOrCreate({
+  selectedEssayId,
+  onSelect,
+  essays,
+}: {
+  selectedEssayId: string | null;
+  onSelect: (id: string) => void;
+  essays: typeof MOCK_ESSAYS;
+}) {
+  const [isCreating, setIsCreating] = useState(false);
+  const [newEssay, setNewEssay] = useState({
+    title: "",
+    content: "",
+  });
+
+  const selectedEssay = essays.find((e) => e.id === selectedEssayId);
+
+  const handleCreateEssay = () => {
+    // TODO: 创建作文逻辑
+    console.log("创建作文:", newEssay);
+    setIsCreating(false);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <Label>选择作文</Label>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1"
+          onClick={() => setIsCreating(!isCreating)}
+        >
+          <Plus className="h-4 w-4" />
+          {isCreating ? "收起" : "上传新作文"}
+        </Button>
+      </div>
+
+      {isCreating ? (
+        <Card className="border-dashed">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="essayTitle">作文标题 *</Label>
+                <Input
+                  id="essayTitle"
+                  value={newEssay.title}
+                  onChange={(e) => setNewEssay({ ...newEssay, title: e.target.value })}
+                  placeholder="请输入作文标题"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="essayContent">作文正文 *</Label>
+                <Textarea
+                  id="essayContent"
+                  value={newEssay.content}
+                  onChange={(e) => setNewEssay({ ...newEssay, content: e.target.value })}
+                  placeholder="请粘贴或输入作文内容..."
+                  className="mt-1 min-h-[200px]"
+                />
+              </div>
+              <div className="text-xs text-gray-500">
+                字数：{newEssay.content.replace(/\s/g, "").length}
+              </div>
+              <Button
+                className="w-full"
+                onClick={handleCreateEssay}
+                disabled={!newEssay.title || !newEssay.content}
+              >
+                确认创建作文
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {essays.length > 0 ? (
+            <div className="space-y-2">
+              {essays.map((essay) => (
+                <div
+                  key={essay.id}
+                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                    selectedEssayId === essay.id
+                      ? "border-primary bg-primary/5"
+                      : "border-gray-200 hover:border-primary/50"
+                  }`}
+                  onClick={() => onSelect(essay.id)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-medium">{essay.title}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {essay.wordCount}字 | {essay.genre}
+                      </p>
+                    </div>
+                    {selectedEssayId === essay.id && (
+                      <Check className="h-5 w-5 text-primary" />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500 border border-dashed rounded-lg">
+              <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+              <p>暂无作文</p>
+              <p className="text-sm">请点击上方"上传新作文"创建</p>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function ApplicationFlow() {
+  const [step, setStep] = useState(1);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [selectedEssayId, setSelectedEssayId] = useState<string | null>(null);
+  const [riskConfirmed, setRiskConfirmed] = useState(false);
+  const { currentIdentity } = useAuthStore();
+
+  // 获取用户的作文列表
+  const userEssays = currentIdentity
+    ? MOCK_ESSAYS.filter((e) => e.ownerIdentityId === currentIdentity.id)
+    : [];
+
+  const canProceedStep1 = selectedStudentId !== null;
+  const canProceedStep2 = selectedEssayId !== null;
+  const canProceedStep3 = riskConfirmed;
+
+  const handleNext = () => {
+    if (step < 3) setStep(step + 1);
+  };
+
+  const handlePrev = () => {
+    if (step > 1) setStep(step - 1);
+  };
+
+  return (
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Link href="/activities">
@@ -47,16 +404,167 @@ function NewAgentSubmissionContent() {
         </div>
       </div>
 
-      {/* Form */}
-      {activity ? (
-        <div className="max-w-xl">
-          <AgentSubmissionForm activity={activity} />
+      {/* 步骤指示器 */}
+      <div className="flex items-center justify-center gap-4">
+        <div className={`flex items-center gap-2 ${step >= 1 ? "text-primary" : "text-gray-400"}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? "bg-primary text-white" : "bg-gray-200"}`}>
+            <User className="h-4 w-4" />
+          </div>
+          <span className="text-sm font-medium">选择学生</span>
         </div>
-      ) : (
-        <div className="max-w-xl">
-          <AgentSubmissionForm />
+        <div className={`w-12 h-0.5 ${step >= 2 ? "bg-primary" : "bg-gray-200"}`} />
+        <div className={`flex items-center gap-2 ${step >= 2 ? "text-primary" : "text-gray-400"}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? "bg-primary text-white" : "bg-gray-200"}`}>
+            <FileText className="h-4 w-4" />
+          </div>
+          <span className="text-sm font-medium">选择作文</span>
         </div>
-      )}
+        <div className={`w-12 h-0.5 ${step >= 3 ? "bg-primary" : "bg-gray-200"}`} />
+        <div className={`flex items-center gap-2 ${step >= 3 ? "text-primary" : "text-gray-400"}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 3 ? "bg-primary text-white" : "bg-gray-200"}`}>
+            <Shield className="h-4 w-4" />
+          </div>
+          <span className="text-sm font-medium">确认并支付</span>
+        </div>
+      </div>
+
+      {/* 步骤内容 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">
+            {step === 1 && "步骤1：选择要代投的学生"}
+            {step === 2 && "步骤2：选择要投稿的作文"}
+            {step === 3 && "步骤3：确认投稿信息并支付"}
+          </CardTitle>
+          <CardDescription>
+            {step === 1 && "请选择要投稿的学生，如无学生请先创建"}
+            {step === 2 && "请选择您想要投稿的作文，可以上传新作文或选择已有作文"}
+            {step === 3 && "请确认投稿信息并完成支付"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {step === 1 && (
+            <div className="space-y-4">
+              <StudentSelectOrCreate
+                selectedStudentId={selectedStudentId}
+                onSelect={setSelectedStudentId}
+                identityId={currentIdentity?.id || ""}
+              />
+              <div className="flex justify-end pt-4">
+                <Button onClick={handleNext} disabled={!canProceedStep1}>
+                  下一步
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-4">
+              <EssaySelectOrCreate
+                selectedEssayId={selectedEssayId}
+                onSelect={setSelectedEssayId}
+                essays={userEssays}
+              />
+              <div className="flex justify-between pt-4">
+                <Button variant="outline" onClick={handlePrev}>上一步</Button>
+                <Button onClick={handleNext} disabled={!canProceedStep2}>
+                  下一步
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-4">
+              {/* 已选信息确认 */}
+              <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">学生</span>
+                  <span className="font-medium">
+                    {MOCK_STUDENTS.find((s) => s.id === selectedStudentId)?.studentName || "-"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">作文</span>
+                  <span className="font-medium">
+                    {MOCK_ESSAYS.find((e) => e.id === selectedEssayId)?.title || "-"}
+                  </span>
+                </div>
+              </div>
+
+              {/* 风险提示 */}
+              <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-yellow-900 mb-2">投稿风险提示</h4>
+                    <ul className="text-sm text-yellow-800 space-y-1">
+                      <li>• 代投服务仅协助投稿，不保证100%录用</li>
+                      <li>• 录用结果取决于稿件质量与活动要求匹配度</li>
+                      <li>• 部分活动可能需要较长审核周期，请耐心等待</li>
+                      <li>• 如投稿失败，将退还代投费用（特殊说明的活动除外）</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* 费用确认 */}
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-600">平台代投费用</span>
+                  <span className="font-medium">¥9.9/篇</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">预计总计</span>
+                  <span className="text-2xl font-bold text-primary">¥9.9</span>
+                </div>
+              </div>
+
+              {/* 确认勾选 */}
+              <div className="flex items-start gap-3 p-4 border rounded-lg">
+                <Checkbox
+                  id="agree"
+                  checked={riskConfirmed}
+                  onCheckedChange={(checked) => setRiskConfirmed(checked as boolean)}
+                />
+                <label htmlFor="agree" className="text-sm text-gray-600">
+                  我已阅读并同意《平台代投服务协议》和上述风险提示
+                </label>
+              </div>
+
+              <div className="flex justify-between pt-4">
+                <Button variant="outline" onClick={handlePrev}>上一步</Button>
+                <Button
+                  className="bg-primary hover:bg-primary/90"
+                  disabled={!canProceedStep3}
+                >
+                  确认并支付 ¥9.9
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function NewAgentSubmissionContent() {
+  const { isAuthenticated } = useAuthStore();
+
+  // 未登录：展示价格引导
+  if (!isAuthenticated()) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <PricingSection />
+      </div>
+    );
+  }
+
+  // 登录后：展示申请流程
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <ApplicationFlow />
     </div>
   );
 }

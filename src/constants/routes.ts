@@ -23,7 +23,7 @@ export const ROUTES = {
   AGENT_SUBMISSIONS: "/agent-submissions",
 
   // 成长档案
-  GROWTH_RECORDS: "/growth-records",
+  GROWTH_RECORDS: "/workspace/workspace/growth-records",
 
   // 会员服务
   MEMBERSHIP: "/membership",
@@ -31,6 +31,9 @@ export const ROUTES = {
   // 媒体库（征稿方展示）
   MEDIA_LIBRARY: "/media-library",
   MEDIA_PUBLISHER_DETAIL: (id: string) => `/media-library/publishers/${id}`,
+
+  // 作文批改
+  ESSAY_REVISION: "/essay-revision",
 
   // 身份切换
   IDENTITY_SWITCH: "/identity-switch",
@@ -40,6 +43,8 @@ export const ROUTES = {
   WORKSPACE_CLASSES: "/workspace/classes",
   WORKSPACE_STUDENTS: "/workspace/students",
   WORKSPACE_BATCH: "/workspace/batch",
+  WORKSPACE_ORDERS: "/workspace/orders",
+  WORKSPACE_ORG_ORDERS: "/workspace/organization-orders",
 
   // 编辑工作台
   EDITOR: "/editor",
@@ -80,11 +85,23 @@ export const MAIN_MENU = [
     icon: "sparkles",
   },
   {
+    title: "作文批改",
+    href: ROUTES.ESSAY_REVISION,
+    icon: "pencil",
+  },
+  {
     title: "会员服务",
     href: ROUTES.MEMBERSHIP,
     icon: "credit-card",
   },
 ] as const;
+
+// 平台代投申请 CTA
+export const AGENT_SUBMISSION_CTA = {
+  title: "申请平台代投",
+  href: "/agent-submissions/new",
+  subtitle: "省时投稿",
+} as const;
 
 // 我的工作台菜单项（按角色区分）
 export const WORKSPACE_MENU_ITEMS = {
@@ -94,30 +111,30 @@ export const WORKSPACE_MENU_ITEMS = {
     { title: "我的孩子", href: ROUTES.WORKSPACE_STUDENTS, icon: "heart" },
     { title: "作文管理", href: "/workspace/essays", icon: "file-text" },
     { title: "投稿记录", href: "/workspace/submissions", icon: "send" },
-    { title: "平台代投记录", href: "/agent-submissions", icon: "shopping-cart" },
-    { title: "成长档案", href: "/growth-records", icon: "archive" },
+    { title: "成长档案", href: "/workspace/growth-records", icon: "archive" },
+    { title: "我的订单", href: ROUTES.WORKSPACE_ORDERS, icon: "receipt" },
   ],
   // 个人老师看到的菜单
   teacher: [
     { title: "工作台首页", href: ROUTES.WORKSPACE, icon: "layout-dashboard" },
+    { title: "班级管理", href: ROUTES.WORKSPACE_CLASSES, icon: "users" },
     { title: "学生管理", href: ROUTES.WORKSPACE_STUDENTS, icon: "book-open" },
     { title: "作文管理", href: "/workspace/essays", icon: "file-text" },
     { title: "投稿记录", href: "/workspace/submissions", icon: "send" },
-    { title: "平台代投记录", href: "/agent-submissions", icon: "shopping-cart" },
     { title: "批量上传", href: "/workspace/essays/batch", icon: "upload" },
-    { title: "成长档案", href: "/growth-records", icon: "archive" },
+    { title: "成长档案", href: "/workspace/growth-records", icon: "archive" },
     { title: "数据统计", href: "/workspace/statistics", icon: "bar-chart" },
+    { title: "我的订单", href: ROUTES.WORKSPACE_ORDERS, icon: "receipt" },
   ],
-  // 机构老师看到的菜单
+  // 机构老师看到的菜单（无订单入口）
   organization_teacher: [
     { title: "工作台首页", href: ROUTES.WORKSPACE, icon: "layout-dashboard" },
     { title: "班级管理", href: ROUTES.WORKSPACE_CLASSES, icon: "users" },
     { title: "授权学生", href: ROUTES.WORKSPACE_STUDENTS, icon: "book-open" },
     { title: "作文管理", href: "/workspace/essays", icon: "file-text" },
     { title: "投稿记录", href: "/workspace/submissions", icon: "send" },
-    { title: "平台代投记录", href: "/agent-submissions", icon: "shopping-cart" },
     { title: "批量上传", href: "/workspace/essays/batch", icon: "upload" },
-    { title: "成长档案", href: "/growth-records", icon: "archive" },
+    { title: "成长档案", href: "/workspace/growth-records", icon: "archive" },
     { title: "数据统计", href: "/workspace/statistics", icon: "bar-chart" },
   ],
   // 机构管理员看到的菜单
@@ -128,16 +145,16 @@ export const WORKSPACE_MENU_ITEMS = {
     { title: "老师管理", href: "/workspace/teachers", icon: "user-cog" },
     { title: "作文管理", href: "/workspace/essays", icon: "file-text" },
     { title: "投稿记录", href: "/workspace/submissions", icon: "send" },
-    { title: "平台代投记录", href: "/agent-submissions", icon: "shopping-cart" },
     { title: "批量上传", href: "/workspace/essays/batch", icon: "upload" },
-    { title: "成长档案", href: "/growth-records", icon: "archive" },
+    { title: "成长档案", href: "/workspace/growth-records", icon: "archive" },
     { title: "数据统计", href: "/workspace/statistics", icon: "bar-chart" },
+    { title: "机构订单", href: ROUTES.WORKSPACE_ORG_ORDERS, icon: "receipt" },
   ],
   // 运营角色看到的菜单
   operator: [
     { title: "工作台首页", href: ROUTES.WORKSPACE, icon: "layout-dashboard" },
     { title: "平台代投任务池", href: ROUTES.ADMIN_AGENT_TASKS, icon: "list-todo" },
-    { title: "成长档案", href: "/growth-records", icon: "archive" },
+    { title: "成长档案", href: "/workspace/growth-records", icon: "archive" },
   ],
 } as const;
 

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores";
-import { MAIN_MENU, USER_MENU, WORKSPACE_MENU_ITEMS, ROUTES } from "@/constants";
+import { MAIN_MENU, USER_MENU, WORKSPACE_MENU_ITEMS, ROUTES, AGENT_SUBMISSION_CTA } from "@/constants";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -83,6 +83,12 @@ export function Header() {
               {item.title}
             </Link>
           ))}
+          {/* 申请平台代投 CTA */}
+          <Link href={AGENT_SUBMISSION_CTA.href}>
+            <Button size="sm" variant="outline" className="border-primary text-primary hover:bg-primary/5">
+              {AGENT_SUBMISSION_CTA.title}
+            </Button>
+          </Link>
         </nav>
 
         {/* User Actions */}

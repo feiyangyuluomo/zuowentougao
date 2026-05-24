@@ -209,7 +209,7 @@ export default function HomePage() {
                   <Badge variant="secondary">获奖记录</Badge>
                   <Badge variant="secondary">时间线</Badge>
                 </div>
-                <Link href={isAuthenticated() ? "/growth-records" : "/login"} className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all">
+                <Link href={isAuthenticated() ? "/workspace/growth-records" : "/login"} className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all">
                   查看档案 <ArrowRight className="h-4 w-4" />
                 </Link>
               </CardContent>

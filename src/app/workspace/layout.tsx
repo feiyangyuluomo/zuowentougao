@@ -18,6 +18,7 @@ import {
   Heart,
   ShoppingCart,
   Archive,
+  Receipt,
 } from "lucide-react";
 
 const WORKSPACE_MENU = [
@@ -69,17 +70,10 @@ const WORKSPACE_MENU = [
     icon: Send,
     roles: ["parent", "teacher", "organization_admin", "organization_teacher"],
   },
-  // 平台代投记录
-  {
-    title: "平台代投记录",
-    href: "/agent-submissions",
-    icon: ShoppingCart,
-    roles: ["parent", "teacher", "organization_admin", "organization_teacher"],
-  },
   // 成长档案 - 所有角色
   {
     title: "成长档案",
-    href: "/growth-records",
+    href: "/workspace/growth-records",
     icon: Archive,
     roles: ["parent", "teacher", "organization_admin", "organization_teacher", "operator", "admin"],
   },
@@ -96,6 +90,20 @@ const WORKSPACE_MENU = [
     href: "/workspace/statistics",
     icon: BarChart3,
     roles: ["teacher", "organization_admin", "organization_teacher"],
+  },
+  // 我的订单 - 家长、个人老师、机构管理员
+  {
+    title: "我的订单",
+    href: "/workspace/orders",
+    icon: Receipt,
+    roles: ["parent", "teacher", "organization_admin"],
+  },
+  // 机构订单 - 仅机构管理员
+  {
+    title: "机构订单",
+    href: "/workspace/organization-orders",
+    icon: Receipt,
+    roles: ["organization_admin"],
   },
 ];
 

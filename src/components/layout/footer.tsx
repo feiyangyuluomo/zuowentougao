@@ -60,7 +60,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/growth-records" className="text-sm text-gray-500 hover:text-primary">
+                <Link href="/workspace/growth-records" className="text-sm text-gray-500 hover:text-primary">
                   成长档案
                 </Link>
               </li>

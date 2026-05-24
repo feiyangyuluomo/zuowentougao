@@ -1,18 +1,30 @@
 "use client";
 
+import { useState } from "react";
 import { useAuthStore } from "@/stores";
 import { canAccessWorkspace, isOrganizationAdmin, isOrganizationTeacher } from "@/lib/permissions";
-import { getMockStudentsByOwner } from "@/lib/mock/students";
+import { getMockStudentsByOwner, MOCK_STUDENTS } from "@/lib/mock/students";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import Link from "next/link";
-import { Plus, Search, GraduationCap, ArrowRight, UserPlus } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import Link from "next/link";
+import { Plus, Search, GraduationCap, UserPlus } from "lucide-react";
 
 export default function StudentsPage() {
   const { currentIdentity } = useAuthStore();
+  const [isCreating, setIsCreating] = useState(false);
+  const [newStudent, setNewStudent] = useState({
+    studentName: "",
+    school: "",
+    className: "",
+    phone: "",
+    guideTeacher: "",
+    address: "",
+  });
 
   if (!canAccessWorkspace(currentIdentity)) {
     return (
@@ -37,12 +49,28 @@ export default function StudentsPage() {
   const canManageStudent =
     identityType === "teacher" ||
     identityType === "organization_admin" ||
-    identityType === "organization_teacher";
+    identityType === "organization_teacher" ||
+    identityType === "parent";
 
   const identityTypeLabels: Record<string, string> = {
     teacher: "个人老师",
     organization_admin: "机构管理员",
     organization_teacher: "机构老师",
+    parent: "家长",
+  };
+
+  const handleCreateStudent = () => {
+    // TODO: 创建学生逻辑
+    console.log("创建学生:", newStudent);
+    setNewStudent({
+      studentName: "",
+      school: "",
+      className: "",
+      phone: "",
+      guideTeacher: "",
+      address: "",
+    });
+    setIsCreating(false);
   };
 
   return (
@@ -55,10 +83,88 @@ export default function StudentsPage() {
           </p>
         </div>
         {canManageStudent && (
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            新增学生
-          </Button>
+          <Dialog open={isCreating} onOpenChange={setIsCreating}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                新增学生
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>创建学生资料</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+                <div>
+                  <Label htmlFor="studentName">学生姓名 *</Label>
+                  <Input
+                    id="studentName"
+                    value={newStudent.studentName}
+                    onChange={(e) => setNewStudent({ ...newStudent, studentName: e.target.value })}
+                    placeholder="请输入学生姓名"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="school">学校</Label>
+                  <Input
+                    id="school"
+                    value={newStudent.school}
+                    onChange={(e) => setNewStudent({ ...newStudent, school: e.target.value })}
+                    placeholder="请输入学校名称"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="className">班级</Label>
+                  <Input
+                    id="className"
+                    value={newStudent.className}
+                    onChange={(e) => setNewStudent({ ...newStudent, className: e.target.value })}
+                    placeholder="如：三年级一班"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="phone">联系电话</Label>
+                  <Input
+                    id="phone"
+                    value={newStudent.phone}
+                    onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })}
+                    placeholder="请输入联系电话"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="guideTeacher">指导老师</Label>
+                  <Input
+                    id="guideTeacher"
+                    value={newStudent.guideTeacher}
+                    onChange={(e) => setNewStudent({ ...newStudent, guideTeacher: e.target.value })}
+                    placeholder="请输入指导老师姓名"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="address">通讯地址</Label>
+                  <Input
+                    id="address"
+                    value={newStudent.address}
+                    onChange={(e) => setNewStudent({ ...newStudent, address: e.target.value })}
+                    placeholder="请输入通讯地址"
+                    className="mt-1"
+                  />
+                </div>
+                <Button
+                  className="w-full"
+                  onClick={handleCreateStudent}
+                  disabled={!newStudent.studentName}
+                >
+                  确认创建
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
 
@@ -89,7 +195,7 @@ export default function StudentsPage() {
                   : "您还没有被分配任何学生"}
               </p>
               {canManageStudent && (
-                <Button className="mt-4 gap-2">
+                <Button className="mt-4 gap-2" onClick={() => setIsCreating(true)}>
                   <UserPlus className="h-4 w-4" />
                   添加学生
                 </Button>
@@ -101,7 +207,7 @@ export default function StudentsPage() {
                 <TableRow>
                   <TableHead>姓名</TableHead>
                   <TableHead>学校</TableHead>
-                  <TableHead>年级</TableHead>
+                  <TableHead>班级</TableHead>
                   <TableHead>指导老师</TableHead>
                   <TableHead>联系电话</TableHead>
                   <TableHead>操作</TableHead>
@@ -121,9 +227,7 @@ export default function StudentsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-gray-500">{student.school || "-"}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{student.grade || "未设置"}</Badge>
-                    </TableCell>
+                    <TableCell className="text-gray-500">{student.classId || "-"}</TableCell>
                     <TableCell className="text-gray-500">{student.guideTeacher || "-"}</TableCell>
                     <TableCell className="text-gray-500">{student.parentPhone || "-"}</TableCell>
                     <TableCell>

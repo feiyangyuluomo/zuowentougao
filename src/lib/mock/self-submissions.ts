@@ -122,14 +122,15 @@ export function getMockSelfSubmissionsByIdentity(identityId: string): SelfSubmis
  */
 export function createMockSelfSubmission(
   params: CreateSelfSubmissionParams,
-  identityId: string
+  identityId: string,
+  studentId?: string
 ): SelfSubmission {
   const newSubmission: SelfSubmission = {
     id: `sub-${Date.now()}`,
     essayId: params.essayId,
     activityId: params.activityId,
     identityId: identityId,
-    studentId: "",
+    studentId: studentId || "",
     submissionEmail: params.submissionEmail || "",
     submissionMethod: params.submissionMethod || "email",
     userSubmissionTime: new Date(),
