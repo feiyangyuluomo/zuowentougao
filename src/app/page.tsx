@@ -171,7 +171,11 @@ export default function HomePage() {
                   <Badge variant="secondary">进度跟踪</Badge>
                   <Badge variant="secondary">截图凭证</Badge>
                 </div>
-                <Link href={isAuthenticated() ? "/agent-submissions" : "/login"} className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all">
+                <Link
+                  href={isAuthenticated() ? "/agent-submissions" : "/login"}
+                  className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:gap-2 transition-all"
+                  onClick={() => trackEvent(AGENT_SUBMISSION_CTA_CLICK, { sourcePage: "homepage_platform_card" })}
+                >
                   申请代投 <ArrowRight className="h-4 w-4" />
                 </Link>
               </CardContent>

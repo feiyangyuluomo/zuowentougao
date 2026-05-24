@@ -31,7 +31,6 @@ export type EventName =
   // 会员与转化
   | "membership_page_view"
   | "membership_cta_click"
-  | "order_page_view"
   // 账号与身份
   | "login_success"
   | "logout_click"

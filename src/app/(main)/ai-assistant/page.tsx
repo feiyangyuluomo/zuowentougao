@@ -18,7 +18,7 @@ import { GRADE_OPTIONS } from "@/constants";
 import { MOCK_AI_ANALYSIS_RESULT, MOCK_AI_RECOMMEND_RESULTS } from "@/lib/mock/ai-results";
 import { createMockEssay } from "@/lib/mock/essays";
 import type { AIAnalysisOutput, AIRecommendResult } from "@/types";
-import { PAGE_VIEW, AI_RECOMMEND_CLICK, AI_REWRITE_CLICK, trackEvent } from "@/lib/analytics";
+import { PAGE_VIEW, AI_RECOMMEND_CLICK, AI_REWRITE_CLICK, AI_REWRITE_RESULT_VIEW, trackEvent } from "@/lib/analytics";
 
 export default function AIAssistantPage() {
   const router = useRouter();
@@ -77,7 +77,7 @@ export default function AIAssistantPage() {
       setAnalysisResult(MOCK_AI_ANALYSIS_RESULT);
       setIsAnalyzing(false);
       // AI 改稿结果查看埋点
-      trackEvent("ai_rewrite_result_view", {
+      trackEvent(AI_REWRITE_RESULT_VIEW, {
         essayId: "",
         studentId: "",
         sourcePage: "/ai-assistant",
