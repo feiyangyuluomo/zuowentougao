@@ -5,7 +5,7 @@ import { useAuthStore } from "@/stores";
 import { ActivityCard } from "@/components/activities/ActivityCard";
 import { ActivityFilter } from "@/components/activities/ActivityFilter";
 import { EmptyState } from "@/components/common";
-import { filterMockActivities } from "@/lib/mock";
+import { filterActivities } from "@/server/services/activity.service";
 import { ACTIVITY_LIST_VIEW, trackEvent } from "@/lib/analytics";
 
 export default function ActivitiesPage() {
@@ -22,8 +22,39 @@ export default function ActivitiesPage() {
     hasTeacherGuide?: boolean;
     hasOrgAward?: boolean;
   }>({});
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredActivities = filterMockActivities(filters);
+  // 加载活动数据
+  useEffect(() => {
+    async function loadActivities() {
+      setLoading(true);
+      try {
+        // 转换 filter 参数格式
+        const filterParams: {
+          gradeScope?: string[];
+          genre?: string[];
+          keyword?: string;
+          hasPayment?: boolean;
+          hasCertificate?: boolean;
+        } = {};
+        if (filters.gradeScope) filterParams.gradeScope = filters.gradeScope;
+        if (filters.genre) filterParams.genre = filters.genre;
+        if (filters.keyword) filterParams.keyword = filters.keyword;
+        if (filters.hasPayment !== undefined) filterParams.hasPayment = filters.hasPayment;
+        if (filters.hasCertificate !== undefined) filterParams.hasCertificate = filters.hasCertificate;
+
+        const data = await filterActivities(filterParams);
+        setActivities(data);
+      } catch (error) {
+        console.error("加载活动失败:", error);
+        setActivities([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadActivities();
+  }, [filters]);
 
   // 页面浏览埋点
   useEffect(() => {
@@ -32,7 +63,7 @@ export default function ActivitiesPage() {
       gradeScope: filters.gradeScope,
       genre: filters.genre,
       activityStatus: filters.activityStatus,
-      resultCount: filteredActivities.length,
+      resultCount: activities.length,
     });
   }, []);
 
@@ -57,10 +88,14 @@ export default function ActivitiesPage() {
       {/* Results */}
       <div className="mt-6">
         <div className="text-sm text-gray-500 mb-4">
-          共找到 {filteredActivities.length} 个活动
+          {loading ? "加载中..." : `共找到 ${activities.length} 个活动`}
         </div>
 
-        {filteredActivities.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <p className="text-gray-500">加载中...</p>
+          </div>
+        ) : activities.length === 0 ? (
           <EmptyState
             variant="no-results"
             title="未找到符合条件的活动"
@@ -72,7 +107,7 @@ export default function ActivitiesPage() {
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredActivities.map((activity) => (
+            {activities.map((activity) => (
               <ActivityCard
                 key={activity.id}
                 activity={activity}

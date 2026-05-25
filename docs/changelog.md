@@ -1,5 +1,40 @@
 # 更新日志
 
+## 2026-05-25 Phase 4A.3 Service 层实现 + 页面切换验证
+
+### 功能改进
+
+#### 1. Order Service 增强
+- **文件**：`src/server/services/order.service.ts`
+- 新增 `getPersonalOrders(identity)` - 获取个人订单列表（过滤机构订单）
+- 新增 `getOrgOrders(organizationId)` - 获取机构订单列表
+- 新增 `getOrderSummary(orders)` - 获取订单统计摘要
+- 新增 `ORDER_TYPE_LABELS` / `PAYMENT_STATUS_LABELS` 常量
+- 移除与 permission.service 重复的 `canAccessOrdersPage` / `canAccessOrganizationOrdersPage`
+
+#### 2. Activity Service 新建
+- **文件**：`src/server/services/activity.service.ts`
+- 新增 `getActivityList()` - 获取活动列表
+- 新增 `filterActivities(filters)` - 筛选活动
+- 新增 `getActivityById(id)` - 获取活动详情
+- **文件**：`src/server/services/index.ts` - 新增导出
+
+#### 3. 页面切换到 Service 层
+- `/workspace/orders` - 从 mock 切换到 `order.service.ts`
+  - 移除 `getOrdersByIdentityId` mock 调用
+  - 改用 `getPersonalOrders(currentIdentity)` 异步获取
+  - 添加 loading 状态
+- `/activities` - 从 mock 切换到 `activity.service.ts`
+  - 移除 `filterMockActivities` mock 调用
+  - 改用 `filterActivities(filterParams)` 异步获取
+  - 添加 loading 状态
+
+#### 4. 依赖导入调整
+- 移除 `@/lib/permissions` 中不存在的 `isParentOrTeacher` 引用
+- 权限检查逻辑直接内联到 service 中
+
+---
+
 ## 2026-05-25 Phase 4A.2 数据库种子数据 + Smoke Test
 
 ### 新增文件

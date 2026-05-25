@@ -1,15 +1,32 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores";
-import { canAccessOrdersPage } from "@/lib/permissions/workspace-resource";
-import { getOrdersByIdentityId, formatAmount, ORDER_TYPE_LABELS, PAYMENT_STATUS_LABELS } from "@/lib/mock/orders";
-import type { Order, PaymentStatus } from "@/lib/mock/orders";
+import { getPersonalOrders, formatAmount, ORDER_TYPE_LABELS, PAYMENT_STATUS_LABELS } from "@/server/services/order.service";
+import type { UserIdentity } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, User, FileText, Receipt } from "lucide-react";
 import Link from "next/link";
 import { ORDER_PAGE_VIEW, trackEvent } from "@/lib/analytics";
+
+type PaymentStatus = "pending" | "paid" | "refunded" | "cancelled";
+
+interface Order {
+  id: string;
+  identityId: string;
+  organizationId?: string;
+  orderType: string;
+  orderTitle: string;
+  amount: number;
+  paymentStatus: PaymentStatus;
+  createdAt: Date;
+  paidAt?: Date;
+  expiredAt?: Date;
+  relatedStudentName?: string;
+  relatedEssayTitle?: string;
+  remarks?: string;
+}
 
 const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
   pending: "bg-yellow-100 text-yellow-800",
@@ -77,6 +94,8 @@ function OrderCard({ order }: { order: Order }) {
 
 export default function OrdersPage() {
   const { currentIdentity } = useAuthStore();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
 
   if (!currentIdentity) {
     return (
@@ -86,7 +105,8 @@ export default function OrdersPage() {
     );
   }
 
-  if (!canAccessOrdersPage(currentIdentity)) {
+  // 家长和个人老师可以访问
+  if (!["parent", "teacher"].includes(currentIdentity.identityType)) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-gray-500">
         <p>您没有权限访问此页面</p>
@@ -97,18 +117,38 @@ export default function OrdersPage() {
     );
   }
 
-  // 页面浏览埋点
+  // 加载订单数据
   useEffect(() => {
+    async function loadOrders() {
+      setLoading(true);
+      try {
+        const data = await getPersonalOrders(currentIdentity as UserIdentity);
+        setOrders(data);
+      } catch (error) {
+        console.error("加载订单失败:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadOrders();
+
+    // 页面浏览埋点
     trackEvent(ORDER_PAGE_VIEW, {
       orderPageType: "personal",
       identityType: currentIdentity?.identityType,
     });
   }, []);
 
-  const orders = getOrdersByIdentityId(currentIdentity.id);
-
   // 计算总计
   const totalAmount = orders.reduce((sum, o) => sum + o.amount, 0);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-500">加载中...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
