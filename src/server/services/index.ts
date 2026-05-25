@@ -8,3 +8,4 @@ export * from "./agent-submission.service";
 export * from "./order.service";
 export * from "./permission.service";
 export * from "./activity.service";
+export * from "./auth.service";

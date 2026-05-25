@@ -1,5 +1,56 @@
 # 更新日志
 
+## 2026-05-25 Phase 4A.4 Auth 数据源切换验证
+
+### 新增文件
+
+| 文件 | 说明 |
+|------|------|
+| `src/lib/auth/auth-client.ts` | 客户端安全的 auth 封装层 |
+| `src/server/services/auth.service.ts` | Auth 业务逻辑层（server 层） |
+
+### 功能改进
+
+#### 1. auth-client.ts 职责
+- `src/lib/auth/auth-client.ts`
+- 提供 `loginByPhone()` / `getUserWithIdentities()` / `getIdentityContext()` / `switchIdentityContext()`
+- 提供 `mockLoginByPhone()` / `mockSwitchIdentity()` - Mock 快速登录
+- 封装 repository 调用，客户端可直接 import
+- 内部调用 `userRepository` / `identityRepository` / `entitlementRepository` / `membershipRepository`
+
+#### 2. auth.service.ts 职责
+- `src/server/services/auth.service.ts`
+- Server 层认证业务逻辑
+- 未来真实登录的接入点（当前为 mock）
+- 不直接在客户端调用（server-only）
+
+#### 3. auth-store.ts 改造
+- `src/stores/auth-store.ts`
+- 移除对 `@/lib/mock/accounts` 和 `@/lib/mock/entitlements` 的直接 import
+- 改用 `@/lib/auth/auth-client` 中的 `mockLoginByPhone()` / `mockSwitchIdentity()`
+- 保留 Zustand / persist / mock 手机号登录 / switchIdentity
+
+### 数据链路
+
+```
+auth-store (client)
+  ↓ 调用
+auth-client (client-safe)
+  ↓ 调用
+userRepository / identityRepository / entitlementRepository / membershipRepository
+  ↓
+USE_MOCK=true 读 mock
+USE_MOCK=false 读 db
+```
+
+### 验证结果
+
+- type-check: 通过
+- prisma generate: 通过
+- build: 通过 (32 个页面)
+
+---
+
 ## 2026-05-25 Phase 4A.3 Service 层实现 + 页面切换验证
 
 ### 功能改进

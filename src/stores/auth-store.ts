@@ -1,5 +1,5 @@
 // ============================================================================
-// 认证状态管理 - Phase 1 自主投稿闭环
+// 认证状态管理 - Phase 4A.4 Auth 数据源切换
 // ============================================================================
 
 import { create } from "zustand";
@@ -10,8 +10,7 @@ import type {
   Entitlement,
   Membership,
 } from "@/types";
-import { getMockAccountByPhone, getMockIdentitiesByPhone } from "@/lib/mock/accounts";
-import { getEntitlementsByIdentityId, getMembershipByIdentityId, isNoEntitlementIdentity } from "@/lib/mock/entitlements";
+import { mockLoginByPhone, mockSwitchIdentity } from "@/lib/auth/auth-client";
 
 // 游客权益（无权益）
 const EMPTY_ENTITLEMENTS: Entitlement[] = [];
@@ -47,18 +46,6 @@ interface AuthStore {
   getMembership: () => Membership | null;
 }
 
-// 内部函数：根据身份加载权益和会员信息
-function loadEntitlementsForIdentity(identity: UserIdentity): { entitlements: Entitlement[], membership: Membership | null } {
-  // 运营人员和管理员没有权益
-  if (isNoEntitlementIdentity(identity.identityType)) {
-    return { entitlements: EMPTY_ENTITLEMENTS, membership: null };
-  }
-  return {
-    entitlements: getEntitlementsByIdentityId(identity.id),
-    membership: getMembershipByIdentityId(identity.id),
-  };
-}
-
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
@@ -72,65 +59,18 @@ export const useAuthStore = create<AuthStore>()(
       _isAuthenticated: false,
 
       // Actions
-      login: async (phone?: string, wxCode?: string) => {
+      login: async (phone?: string, _wxCode?: string) => {
         set({ isLoading: true });
         try {
-          // 根据手机号获取账号信息
-          const account = getMockAccountByPhone(phone || "13800138000");
-          const mockNickname = account?.nickname || "游客";
-          const mockUserId = account?.userId || `user-${Date.now()}`;
-
-          const mockUser: User = {
-            id: mockUserId,
-            nickname: mockNickname,
-            phone: phone || "13800138000",
-            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${mockUserId}`,
-            status: "active",
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
-
-          // 根据手机号获取身份列表
-          const mockIdentities = getMockIdentitiesByPhone(phone || "13800138000");
-
-          // 如果没有身份，创建一个默认身份
-          if (mockIdentities.length === 0) {
-            const isOperator = phone === "13800138002";
-            const isTeacher = phone === "13800138003";
-            const isOrgAdmin = phone === "13800138004";
-
-            let identityType: "parent" | "operator" | "teacher" | "organization_admin";
-            if (isOperator) {
-              identityType = "operator";
-            } else if (isTeacher) {
-              identityType = "teacher";
-            } else if (isOrgAdmin) {
-              identityType = "organization_admin";
-            } else {
-              identityType = "parent";
-            }
-
-            const defaultIdentity: UserIdentity = {
-              id: `id-${identityType}-${Date.now()}`,
-              userId: mockUser.id,
-              identityType,
-              organizationId: isOrgAdmin ? "org-001" : undefined,
-              status: "active",
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            };
-            mockIdentities.push(defaultIdentity);
-          }
-
-          const firstIdentity = mockIdentities[0];
-          const { entitlements, membership } = loadEntitlementsForIdentity(firstIdentity);
+          // 使用 auth-client 的 mock 登录
+          const result = await mockLoginByPhone(phone || "13800138000");
 
           set({
-            user: mockUser,
-            identities: mockIdentities,
-            currentIdentity: firstIdentity,
-            entitlements,
-            membership,
+            user: result.user,
+            identities: result.identities,
+            currentIdentity: result.currentIdentity,
+            entitlements: result.entitlements,
+            membership: result.membership,
             _isAuthenticated: true,
             isLoading: false,
           });
@@ -167,14 +107,12 @@ export const useAuthStore = create<AuthStore>()(
 
       switchIdentity: (identityId: string) => {
         const { identities } = get();
-        const newIdentity = identities.find((i) => i.id === identityId);
-        if (newIdentity) {
-          // 重新加载新身份的权益和会员信息
-          const { entitlements, membership } = loadEntitlementsForIdentity(newIdentity);
+        const result = mockSwitchIdentity(identities, identityId);
+        if (result) {
           set({
-            currentIdentity: newIdentity,
-            entitlements,
-            membership,
+            currentIdentity: result.identity,
+            entitlements: result.entitlements,
+            membership: result.membership,
           });
         }
       },
