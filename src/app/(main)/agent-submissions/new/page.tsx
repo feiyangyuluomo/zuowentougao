@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { useAuthStore } from "@/stores";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,10 +15,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Check } from "lucide-react";
 import Link from "next/link";
 import { ArrowLeft, FileText, Send, Shield, Zap, AlertTriangle, User, LogIn, Plus, UserPlus } from "lucide-react";
-import { MOCK_STUDENTS, createMockStudent } from "@/lib/mock/students";
-import { MOCK_ESSAYS, createMockEssay } from "@/lib/mock/essays";
 import { getMockActivityById } from "@/lib/mock";
 import { AGENT_SUBMISSION_CREATED, trackEvent } from "@/lib/analytics";
+import { getStudents, createStudent, type StudentInfo } from "@/lib/api/student-api";
+import { getEssays, createEssay, getEssayById, type EssayInfo } from "@/lib/api/essay-api";
 
 function PricingSection() {
   return (
@@ -99,8 +99,8 @@ function StudentSelectOrCreate({
 }: {
   selectedStudentId: string | null;
   onSelect: (id: string) => void;
-  students: typeof MOCK_STUDENTS;
-  onCreateStudent: (data: { studentName: string; school?: string; className?: string; phone?: string; guideTeacher?: string; address?: string }) => void;
+  students: StudentInfo[];
+  onCreateStudent: (data: { studentName: string; school?: string; className?: string; phone?: string; guideTeacher?: string; address?: string }) => Promise<void>;
 }) {
   const [isCreating, setIsCreating] = useState(false);
   const [newStudent, setNewStudent] = useState({
@@ -112,9 +112,9 @@ function StudentSelectOrCreate({
     address: "",
   });
 
-  const handleCreateStudent = () => {
+  const handleCreateStudent = async () => {
     if (!newStudent.studentName) return;
-    onCreateStudent({
+    await onCreateStudent({
       studentName: newStudent.studentName,
       school: newStudent.school || undefined,
       className: newStudent.className || undefined,
@@ -261,10 +261,12 @@ function EssaySelectOrCreate({
   selectedEssayId,
   onSelect,
   essays,
+  onCreateEssay,
 }: {
   selectedEssayId: string | null;
   onSelect: (id: string) => void;
-  essays: typeof MOCK_ESSAYS;
+  essays: EssayInfo[];
+  onCreateEssay: (data: { title: string; content: string }) => Promise<void>;
 }) {
   const [isCreating, setIsCreating] = useState(false);
   const [newEssay, setNewEssay] = useState({
@@ -274,9 +276,13 @@ function EssaySelectOrCreate({
 
   const selectedEssay = essays.find((e) => e.id === selectedEssayId);
 
-  const handleCreateEssay = () => {
-    // TODO: 创建作文逻辑
-    console.log("创建作文:", newEssay);
+  const handleCreateEssay = async () => {
+    if (!newEssay.title || !newEssay.content) return;
+    await onCreateEssay({
+      title: newEssay.title,
+      content: newEssay.content,
+    });
+    setNewEssay({ title: "", content: "" });
     setIsCreating(false);
   };
 
@@ -377,38 +383,72 @@ function ApplicationFlow({
   activityId,
   prefilledTitle,
   prefilledContent,
+  essayIdFromUrl,
 }: {
   activityId: string | null;
   prefilledTitle: string;
   prefilledContent: string;
+  essayIdFromUrl: string | null;
 }) {
   const [step, setStep] = useState(1);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedEssayId, setSelectedEssayId] = useState<string | null>(null);
   const [riskConfirmed, setRiskConfirmed] = useState(false);
   const { currentIdentity } = useAuthStore();
-  const [students, setStudents] = useState(MOCK_STUDENTS);
-  const [essays, setEssays] = useState(MOCK_ESSAYS);
+  const [students, setStudents] = useState<StudentInfo[]>([]);
+  const [essays, setEssays] = useState<EssayInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 加载学生和作文列表
+  const loadData = useCallback(async () => {
+    if (!currentIdentity) return;
+    setIsLoading(true);
+    try {
+      const [studentsData, essaysData] = await Promise.all([
+        getStudents(),
+        getEssays(),
+      ]);
+      setStudents(studentsData);
+      setEssays(essaysData);
+    } catch (error) {
+      console.error("加载数据失败:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentIdentity]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // 如果 URL 中有 essayId，设置选中作文
+  useEffect(() => {
+    if (essayIdFromUrl && essays.length > 0) {
+      setSelectedEssayId(essayIdFromUrl);
+    }
+  }, [essayIdFromUrl, essays]);
 
   // 如果有预填内容，自动创建作文
   useEffect(() => {
-    if (prefilledTitle && prefilledContent && currentIdentity) {
+    if (prefilledTitle && prefilledContent && currentIdentity && !isLoading) {
       // 检查是否已有相同标题的作文
       const existing = essays.find(e => e.title === prefilledTitle && e.content === prefilledContent);
       if (!existing) {
-        const newEssay = createMockEssay({
+        // 使用 API 创建作文
+        createEssay({
           title: prefilledTitle,
           content: prefilledContent,
-          grade: "",
-          ownerIdentityId: currentIdentity.id,
+        }).then((newEssay) => {
+          setEssays([...essays, newEssay]);
+          setSelectedEssayId(newEssay.id);
+        }).catch((err) => {
+          console.error("创建作文失败:", err);
         });
-        setEssays([...essays, newEssay]);
-        setSelectedEssayId(newEssay.id);
       } else {
         setSelectedEssayId(existing.id);
       }
     }
-  }, [prefilledTitle, prefilledContent, currentIdentity]);
+  }, [prefilledTitle, prefilledContent, currentIdentity, isLoading]);
 
   // 获取当前身份下的学生
   const ownerStudents = students.filter((s) => s.ownerIdentityId === currentIdentity?.id);
@@ -501,9 +541,14 @@ function ApplicationFlow({
                 selectedStudentId={selectedStudentId}
                 onSelect={setSelectedStudentId}
                 students={ownerStudents}
-                onCreateStudent={(data) => {
-                  if (!currentIdentity) return;
-                  const created = createMockStudent({ ...data, ownerIdentityId: currentIdentity.id });
+                onCreateStudent={async (data) => {
+                  const created = await createStudent({
+                    studentName: data.studentName,
+                    school: data.school,
+                    phone: data.phone,
+                    guideTeacher: data.guideTeacher,
+                    address: data.address,
+                  });
                   setStudents([...students, created]);
                   setSelectedStudentId(created.id);
                 }}
@@ -522,6 +567,14 @@ function ApplicationFlow({
                 selectedEssayId={selectedEssayId}
                 onSelect={setSelectedEssayId}
                 essays={userEssays}
+                onCreateEssay={async (data) => {
+                  const created = await createEssay({
+                    title: data.title,
+                    content: data.content,
+                  });
+                  setEssays([...essays, created]);
+                  setSelectedEssayId(created.id);
+                }}
               />
               <div className="flex justify-between pt-4">
                 <Button variant="outline" onClick={handlePrev}>上一步</Button>
@@ -626,6 +679,7 @@ function NewAgentSubmissionContent() {
   const { isAuthenticated } = useAuthStore();
   const searchParams = useSearchParams();
   const activityId = searchParams.get("activity");
+  const essayIdFromUrl = searchParams.get("essayId");
   const prefilledTitle = searchParams.get("title") || "";
   const prefilledContent = searchParams.get("content") || "";
 
@@ -643,6 +697,7 @@ function NewAgentSubmissionContent() {
     <div className="container mx-auto px-4 py-8">
       <ApplicationFlow
         activityId={activityId}
+        essayIdFromUrl={essayIdFromUrl}
         prefilledTitle={prefilledTitle}
         prefilledContent={prefilledContent}
       />

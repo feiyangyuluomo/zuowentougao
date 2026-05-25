@@ -14,6 +14,20 @@ export interface IStudentRepository {
   findByOwner(ownerIdentityId: string): Promise<Student[]>;
   findByOrganization(organizationId: string): Promise<Student[]>;
   findByClass(classId: string): Promise<Student[]>;
+  create(data: {
+    ownerIdentityId: string;
+    studentName: string;
+    school?: string;
+    grade?: string;
+    gender?: string;
+    phone?: string;
+    parentPhone?: string;
+    guideTeacher?: string;
+    address?: string;
+    birthday?: Date;
+    organizationId?: string;
+    classId?: string;
+  }): Promise<Student>;
 }
 
 // Repository 实现
@@ -121,6 +135,81 @@ export class StudentRepository implements IStudentRepository {
       createdAt: s.createdAt,
       updatedAt: s.updatedAt,
     }));
+  }
+
+  async create(data: {
+    ownerIdentityId: string;
+    studentName: string;
+    school?: string;
+    grade?: string;
+    gender?: string;
+    phone?: string;
+    parentPhone?: string;
+    guideTeacher?: string;
+    address?: string;
+    birthday?: Date;
+    organizationId?: string;
+    classId?: string;
+  }): Promise<Student> {
+    if (USE_MOCK) {
+      const newStudent: Student = {
+        id: `stu-${Date.now()}`,
+        ownerIdentityId: data.ownerIdentityId,
+        organizationId: data.organizationId,
+        classId: data.classId,
+        studentName: data.studentName,
+        school: data.school,
+        grade: data.grade,
+        gender: (data.gender as Gender) ?? undefined,
+        avatar: undefined,
+        phone: data.phone,
+        parentPhone: data.parentPhone,
+        guideTeacher: data.guideTeacher,
+        address: data.address,
+        birthday: data.birthday,
+        status: "active",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      MOCK_STUDENTS.push(newStudent);
+      return newStudent;
+    }
+    const student = await prisma.student.create({
+      data: {
+        ownerIdentityId: data.ownerIdentityId,
+        studentName: data.studentName,
+        school: data.school,
+        grade: data.grade,
+        gender: data.gender,
+        phone: data.phone,
+        parentPhone: data.parentPhone,
+        guideTeacher: data.guideTeacher,
+        address: data.address,
+        birthday: data.birthday,
+        organizationId: data.organizationId,
+        classId: data.classId,
+        status: "active",
+      },
+    });
+    return {
+      id: student.id,
+      ownerIdentityId: student.ownerIdentityId,
+      organizationId: student.organizationId ?? undefined,
+      classId: student.classId ?? undefined,
+      studentName: student.studentName,
+      school: student.school ?? undefined,
+      grade: student.grade ?? undefined,
+      gender: (student.gender as Gender) ?? undefined,
+      avatar: student.avatar ?? undefined,
+      phone: student.phone ?? undefined,
+      parentPhone: student.parentPhone ?? undefined,
+      guideTeacher: student.guideTeacher ?? undefined,
+      address: student.address ?? undefined,
+      birthday: student.birthday ?? undefined,
+      status: student.status as AccountStatus,
+      createdAt: student.createdAt,
+      updatedAt: student.updatedAt,
+    };
   }
 }
 

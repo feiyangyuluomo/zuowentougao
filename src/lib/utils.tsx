@@ -12,9 +12,14 @@ export function cn(...inputs: ClassValue[]) {
 // 时间格式化
 // ============================================================================
 
-export function formatDeadline(date: Date): string {
+export function formatDeadline(date: Date | string | undefined): string {
+  if (!date) return "暂无截止日期";
+
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  if (isNaN(dateObj.getTime())) return "暂无截止日期";
+
   const now = new Date();
-  const diff = date.getTime() - now.getTime();
+  const diff = dateObj.getTime() - now.getTime();
   const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
 
   if (days < 0) {
@@ -26,7 +31,7 @@ export function formatDeadline(date: Date): string {
   } else if (days <= 30) {
     return `${Math.ceil(days / 7)}周后截止`;
   } else {
-    return date.toLocaleDateString("zh-CN", {
+    return dateObj.toLocaleDateString("zh-CN", {
       month: "short",
       day: "numeric",
     });

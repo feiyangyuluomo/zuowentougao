@@ -14,6 +14,15 @@ export interface IEssayRepository {
   findByOwner(ownerIdentityId: string): Promise<Essay[]>;
   findByStudent(studentId: string): Promise<Essay[]>;
   findVersions(essayId: string): Promise<EssayVersion[]>;
+  create(data: {
+    ownerIdentityId: string;
+    studentId?: string;
+    title: string;
+    content: string;
+    wordCount?: number;
+    genre?: string;
+    themeTags?: string[];
+  }): Promise<Essay>;
 }
 
 // Repository 实现
@@ -101,6 +110,66 @@ export class EssayRepository implements IEssayRepository {
       createdAt: v.createdAt,
       updatedAt: v.updatedAt,
     }));
+  }
+
+  async create(data: {
+    ownerIdentityId: string;
+    studentId?: string;
+    title: string;
+    content: string;
+    wordCount?: number;
+    genre?: string;
+    themeTags?: string[];
+  }): Promise<Essay> {
+    if (USE_MOCK) {
+      const newEssay: Essay = {
+        id: `ess-${Date.now()}`,
+        studentId: data.studentId || `stu-${Date.now()}`,
+        ownerIdentityId: data.ownerIdentityId,
+        title: data.title,
+        content: data.content,
+        wordCount: data.wordCount || data.content.length,
+        genre: (data.genre as EssayGenre) ?? undefined,
+        themeTags: data.themeTags,
+        status: "draft",
+        coverImage: undefined,
+        latestVersionId: `ver-${Date.now()}`,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      MOCK_ESSAYS.push(newEssay);
+      return newEssay;
+    }
+    const createData: Record<string, unknown> = {
+      ownerIdentityId: data.ownerIdentityId,
+      title: data.title,
+      content: data.content,
+      wordCount: data.wordCount || data.content.length,
+      genre: data.genre,
+      themeTags: data.themeTags,
+      status: "draft",
+    };
+    if (data.studentId) {
+      createData.studentId = data.studentId;
+    }
+    const essay = await prisma.essay.create({
+      data: createData as Parameters<typeof prisma.essay.create>[0]["data"],
+    });
+    return {
+      id: essay.id,
+      studentId: essay.studentId,
+      ownerIdentityId: essay.ownerIdentityId,
+      title: essay.title,
+      content: essay.content,
+      wordCount: essay.wordCount,
+      genre: (essay.genre as EssayGenre) ?? undefined,
+      themeTags: essay.themeTags,
+      status: essay.status as "draft" | "published",
+      coverImage: essay.coverImage ?? undefined,
+      latestVersionId: essay.latestVersionId ?? undefined,
+      createdAt: essay.createdAt,
+      updatedAt: essay.updatedAt,
+    };
   }
 }
 

@@ -16,20 +16,23 @@ interface AIRecommendResultProps {
   onSelectActivity?: (activityId: string) => void;
   essayTitle?: string;
   essayContent?: string;
+  essayId?: string | null;
 }
 
 export function AIRecommendResultList({
   recommendations,
   onSelectActivity,
   essayTitle = "",
-  essayContent = ""
+  essayContent = "",
+  essayId = null
 }: AIRecommendResultProps) {
   const router = useRouter();
 
   const handleAgentSubmission = (activityId: string) => {
-    // 构建URL参数：活动ID、作文标题、作文内容
+    // 构建URL参数：活动ID、作文ID、作文标题、作文内容
     const params = new URLSearchParams();
     params.set("activity", activityId);
+    if (essayId) params.set("essayId", essayId);
     if (essayTitle) params.set("title", essayTitle);
     if (essayContent) params.set("content", essayContent);
     router.push(`/agent-submissions/new?${params.toString()}`);

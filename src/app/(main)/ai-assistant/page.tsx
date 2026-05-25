@@ -19,6 +19,7 @@ import { MOCK_AI_ANALYSIS_RESULT, MOCK_AI_RECOMMEND_RESULTS } from "@/lib/mock/a
 import { createMockEssay } from "@/lib/mock/essays";
 import type { AIAnalysisOutput, AIRecommendResult } from "@/types";
 import { PAGE_VIEW, AI_RECOMMEND_CLICK, AI_REWRITE_CLICK, AI_REWRITE_RESULT_VIEW, trackEvent } from "@/lib/analytics";
+import { createEssay } from "@/lib/api/essay-api";
 
 export default function AIAssistantPage() {
   const router = useRouter();
@@ -30,6 +31,7 @@ export default function AIAssistantPage() {
   const [analysisResult, setAnalysisResult] = useState<AIAnalysisOutput | null>(null);
   const [recommendations, setRecommendations] = useState<AIRecommendResult[]>([]);
   const [showRecommend, setShowRecommend] = useState(false);
+  const [savedEssayId, setSavedEssayId] = useState<string | null>(null);
 
   // 页面浏览埋点
   useEffect(() => {
@@ -105,7 +107,7 @@ export default function AIAssistantPage() {
     router.push(`/activities/${activityId}`);
   };
 
-  const handleSaveToEssays = (dialogTitle: string) => {
+  const handleSaveToEssays = async (dialogTitle: string) => {
     // 优先使用用户输入的标题，否则使用弹窗传入的标题
     const finalTitle = title.trim() || dialogTitle;
     if (!finalTitle) {
@@ -118,17 +120,15 @@ export default function AIAssistantPage() {
       return;
     }
 
-    // 创建新作文
-    const newEssay = createMockEssay({
+    // 使用 API 创建作文
+    const newEssay = await createEssay({
       title: finalTitle,
       content: content,
       grade: grade,
-      ownerIdentityId: currentIdentity.id,
     });
 
+    setSavedEssayId(newEssay.id);
     alert(`作文"${finalTitle}"已保存到"我的作文"中`);
-    // 清空标题
-    setTitle("");
   };
 
   return (
@@ -271,6 +271,7 @@ export default function AIAssistantPage() {
                 onSelectActivity={handleSelectActivity}
                 essayTitle={title}
                 essayContent={content}
+                essayId={savedEssayId}
               />
             )}
 
