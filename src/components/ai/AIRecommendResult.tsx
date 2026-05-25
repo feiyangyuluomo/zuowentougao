@@ -29,12 +29,17 @@ export function AIRecommendResultList({
   const router = useRouter();
 
   const handleAgentSubmission = (activityId: string) => {
-    // 构建URL参数：活动ID、作文ID、作文标题、作文内容
+    // 构建URL参数
     const params = new URLSearchParams();
     params.set("activity", activityId);
-    if (essayId) params.set("essayId", essayId);
-    if (essayTitle) params.set("title", essayTitle);
-    if (essayContent) params.set("content", essayContent);
+    if (essayId) {
+      // 有 essayId 时只传 essayId，不传 title/content 避免重复创建
+      params.set("essayId", essayId);
+    } else {
+      // 没有 essayId 时才传 title/content 作为 fallback
+      if (essayTitle) params.set("title", essayTitle);
+      if (essayContent) params.set("content", essayContent);
+    }
     router.push(`/agent-submissions/new?${params.toString()}`);
   };
   if (recommendations.length === 0) {
