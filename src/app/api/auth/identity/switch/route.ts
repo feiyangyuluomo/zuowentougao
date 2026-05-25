@@ -9,16 +9,20 @@
 import { NextRequest } from "next/server";
 import { successResponse, badRequestResponse, notFoundResponse } from "@/server/api/response";
 import { authService } from "@/server/services";
+import { requireIdentityId } from "@/server/api/validators";
 
 export async function POST(request: NextRequest) {
   try {
     // 解析请求体
     const body = await request.json();
-    const { identityId } = body;
+    const { identityId: rawIdentityId } = body;
 
     // 参数校验
-    if (!identityId || typeof identityId !== "string") {
-      return badRequestResponse("identityId 不能为空");
+    let identityId: string;
+    try {
+      identityId = requireIdentityId(rawIdentityId);
+    } catch (error) {
+      return badRequestResponse((error as Error).message);
     }
 
     // 调用 service 切换身份

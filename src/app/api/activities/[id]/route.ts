@@ -6,16 +6,21 @@
 import { NextRequest } from "next/server";
 import { successResponse, badRequestResponse, notFoundResponse } from "@/server/api/response";
 import { activityService } from "@/server/services";
+import { requireIdentityId } from "@/server/api/validators";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id: rawId } = await params;
 
-    if (!id) {
-      return badRequestResponse("活动ID不能为空");
+    // 参数校验
+    let id: string;
+    try {
+      id = requireIdentityId(rawId);
+    } catch (error) {
+      return badRequestResponse((error as Error).message);
     }
 
     // 调用 service 获取活动详情

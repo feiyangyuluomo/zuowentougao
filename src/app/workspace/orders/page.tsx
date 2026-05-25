@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores";
-import { orderService, ORDER_TYPE_LABELS, PAYMENT_STATUS_LABELS } from "@/server/services/order.service";
+import { getOrders, ORDER_TYPE_LABELS, PAYMENT_STATUS_LABELS } from "@/lib/api/order-api";
+import { formatAmount } from "@/lib/api/order-api";
+import type { Order } from "@/lib/api/order-api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, User, FileText, Receipt } from "lucide-react";
@@ -10,22 +12,6 @@ import Link from "next/link";
 import { ORDER_PAGE_VIEW, trackEvent } from "@/lib/analytics";
 
 type PaymentStatus = "pending" | "paid" | "refunded" | "cancelled";
-
-interface Order {
-  id: string;
-  identityId: string;
-  organizationId?: string;
-  orderType: string;
-  orderTitle: string;
-  amount: number;
-  paymentStatus: PaymentStatus;
-  createdAt: Date;
-  paidAt?: Date;
-  expiredAt?: Date;
-  relatedStudentName?: string;
-  relatedEssayTitle?: string;
-  remarks?: string;
-}
 
 const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
   pending: "bg-yellow-100 text-yellow-800",
@@ -40,7 +26,7 @@ function OrderCard({ order }: { order: Order }) {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium">{order.orderTitle}</CardTitle>
-          <Badge className={PAYMENT_STATUS_COLORS[order.paymentStatus]}>
+          <Badge className={PAYMENT_STATUS_COLORS[order.paymentStatus as PaymentStatus]}>
             {PAYMENT_STATUS_LABELS[order.paymentStatus]}
           </Badge>
         </div>
@@ -83,7 +69,7 @@ function OrderCard({ order }: { order: Order }) {
         )}
         <div className="pt-2 border-t mt-3">
           <span className="text-lg font-semibold text-primary">
-            {orderService.formatAmount(order.amount)}
+            {formatAmount(order.amount)}
           </span>
         </div>
       </CardContent>
@@ -125,7 +111,7 @@ export default function OrdersPage() {
     async function loadOrders() {
       setLoading(true);
       try {
-        const data = await orderService.getPersonalOrders(identityId);
+        const data = await getOrders(identityId);
         setOrders(data);
       } catch (error) {
         console.error("加载订单失败:", error);
@@ -180,7 +166,7 @@ export default function OrdersPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <span className="text-2xl font-semibold text-primary">
-                {orderService.formatAmount(totalAmount)}
+                {formatAmount(totalAmount)}
               </span>
             </div>
           </CardContent>

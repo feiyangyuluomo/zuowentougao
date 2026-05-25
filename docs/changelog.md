@@ -1,5 +1,65 @@
 # 更新日志
 
+## 2026-05-25 Phase 4B.1 API 安全加固 + 页面逐步切 API
+
+### 新增文件
+
+| 文件 | 说明 |
+|------|------|
+| `src/server/api/validators.ts` | 基础参数校验函数 |
+| `src/server/api/auth-context.ts` | 临时身份上下文（Phase 4B.1 临时方案） |
+
+### 功能改进
+
+#### 1. validators.ts 校验函数
+- `requireString()` - 要求字符串
+- `requireIdentityId()` - 要求 identityId
+- `requirePhone()` - 要求手机号（11位数字）
+- `parseBooleanQuery()` - 解析布尔值 query
+- `parseStringArrayQuery()` - 解析字符串数组 query（支持逗号分隔）
+- `getIdentityIdFromRequest()` - 从 request 获取 identityId
+- `getPhoneFromRequest()` - 从 request 获取手机号
+
+#### 2. auth-context.ts 临时身份方案
+- `getIdentityFromRequest()` - 获取身份（临时）
+- `requireIdentityFromRequest()` - 要求身份存在
+- `requireOrderIdentityFromRequest()` - 校验 parent/teacher
+- `requireOrgOrderIdentityFromRequest()` - 校验 organization_admin
+- **注意**：这是临时方案，真实上线前必须替换为 session/JWT/cookie
+
+#### 3. API 加固
+
+| API | 加固内容 |
+|-----|---------|
+| `POST /api/auth/login` | phone 校验（requirePhone） |
+| `POST /api/auth/identity/switch` | identityId 校验（requireIdentityId） |
+| `GET /api/activities` | query 参数用 validators 解析 |
+| `GET /api/activities/[id]` | id 校验（requireIdentityId） |
+| `GET /api/orders` | auth-context 校验身份类型 |
+| `GET /api/organization-orders` | auth-context 校验身份类型 |
+
+#### 4. 页面切 API
+
+| 页面 | 切换 |
+|------|------|
+| `/workspace/orders` | 改用 `order-api.ts` → `/api/orders` |
+| `/workspace/organization-orders` | 改用 `order-api.ts` → `/api/organization-orders` |
+
+### 安全说明
+
+> **当前 auth-context 是 Phase 4B.1 临时方案**
+> - 前端仍传入 identityId（可被伪造）
+> - 无真实 session/JWT/cookie 校验
+> - 真实上线前必须替换
+
+### 验证结果
+
+- type-check: 通过
+- prisma generate: 通过
+- build: 通过
+
+---
+
 ## 2026-05-25 Phase 4B API Route 最小后端接口
 
 ### 新增文件

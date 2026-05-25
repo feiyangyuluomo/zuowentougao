@@ -7,6 +7,7 @@ import { NextRequest } from "next/server";
 import { successResponse, badRequestResponse } from "@/server/api/response";
 import { activityService } from "@/server/services";
 import { ActivityStatus } from "@prisma/client";
+import { parseBooleanQuery, parseStringArrayQuery, optionalString } from "@/server/api/validators";
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,23 +23,29 @@ export async function GET(request: NextRequest) {
       hasCertificate?: boolean;
     } = {};
 
-    const keyword = searchParams.get("keyword");
+    // keyword
+    const keyword = optionalString(searchParams.get("keyword"));
     if (keyword) filters.keyword = keyword;
 
-    const gradeScope = searchParams.getAll("gradeScope");
+    // gradeScope - 支持逗号分隔或多次同名参数
+    const gradeScope = parseStringArrayQuery(searchParams.getAll("gradeScope"));
     if (gradeScope.length > 0) filters.gradeScope = gradeScope;
 
-    const genre = searchParams.getAll("genre");
+    // genre - 支持逗号分隔或多次同名参数
+    const genre = parseStringArrayQuery(searchParams.getAll("genre"));
     if (genre.length > 0) filters.genre = genre;
 
-    const activityStatus = searchParams.get("activityStatus");
+    // activityStatus
+    const activityStatus = optionalString(searchParams.get("activityStatus"));
     if (activityStatus) filters.activityStatus = activityStatus as ActivityStatus;
 
-    const hasPayment = searchParams.get("hasPayment");
-    if (hasPayment !== null) filters.hasPayment = hasPayment === "true";
+    // hasPayment - 必须用 parseBooleanQuery
+    const hasPayment = parseBooleanQuery(searchParams.get("hasPayment"));
+    if (hasPayment !== undefined) filters.hasPayment = hasPayment;
 
-    const hasCertificate = searchParams.get("hasCertificate");
-    if (hasCertificate !== null) filters.hasCertificate = hasCertificate === "true";
+    // hasCertificate - 必须用 parseBooleanQuery
+    const hasCertificate = parseBooleanQuery(searchParams.get("hasCertificate"));
+    if (hasCertificate !== undefined) filters.hasCertificate = hasCertificate;
 
     // 调用 service 获取活动列表
     const activities = await activityService.filterActivities(filters);

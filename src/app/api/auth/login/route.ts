@@ -9,6 +9,7 @@
 import { NextRequest } from "next/server";
 import { successResponse, badRequestResponse, notFoundResponse } from "@/server/api/response";
 import { authService } from "@/server/services";
+import { requirePhone } from "@/server/api/validators";
 
 // 允许测试的手机号（开发阶段）
 const ALLOWED_TEST_PHONES = [
@@ -23,11 +24,14 @@ export async function POST(request: NextRequest) {
   try {
     // 解析请求体
     const body = await request.json();
-    const { phone } = body;
+    const { phone: rawPhone } = body;
 
     // 参数校验
-    if (!phone || typeof phone !== "string") {
-      return badRequestResponse("手机号不能为空");
+    let phone: string;
+    try {
+      phone = requirePhone(rawPhone);
+    } catch (error) {
+      return badRequestResponse((error as Error).message);
     }
 
     // 开发阶段：限制测试手机号

@@ -3,34 +3,31 @@
 // 个人订单 API
 //
 // 只允许 parent 和 teacher
+// Phase 4B.1 临时方案：依赖前端传入 identityId
+// 真实上线前必须替换为 session/JWT/cookie
 // ============================================================================
 
 import { NextRequest } from "next/server";
-import { successResponse, badRequestResponse, forbiddenResponse } from "@/server/api/response";
+import { successResponse, badRequestResponse, forbiddenResponse, notFoundResponse } from "@/server/api/response";
 import { orderService } from "@/server/services";
-import { identityRepository } from "@/server/repositories";
+import { requireOrderIdentityFromRequest } from "@/server/api/auth-context";
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const identityId = searchParams.get("identityId");
-
-    if (!identityId) {
-      return badRequestResponse("identityId 不能为空");
-    }
-
-    // 校验身份类型（只允许 parent 和 teacher）
-    const identity = await identityRepository.findById(identityId);
-    if (!identity) {
-      return badRequestResponse("身份不存在");
-    }
-
-    if (!["parent", "teacher"].includes(identity.identityType)) {
-      return forbiddenResponse("只允许家长和个人老师访问此接口");
+    // 获取并校验身份
+    let identity;
+    try {
+      identity = await requireOrderIdentityFromRequest(request);
+    } catch (error) {
+      const message = (error as Error).message;
+      if (message.includes("不存在") || message.includes("未提供")) {
+        return notFoundResponse(message);
+      }
+      return forbiddenResponse(message);
     }
 
     // 调用 service 获取个人订单
-    const orders = await orderService.getPersonalOrders(identityId);
+    const orders = await orderService.getPersonalOrders(identity.id);
 
     // 转换日期为字符串
     const responseData = orders.map((o) => ({

@@ -6,6 +6,27 @@
 import { apiGet } from "./client";
 
 // ============================================================================
+// 常量
+// ============================================================================
+
+// 订单类型中文名称
+export const ORDER_TYPE_LABELS: Record<string, string> = {
+  membership: "会员权益",
+  ai_rewrite: "AI批改",
+  agent_submission: "平台代投",
+  manual_review: "人工批改",
+  organization_package: "机构套餐",
+};
+
+// 支付状态中文名称
+export const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  pending: "待支付",
+  paid: "已支付",
+  refunded: "已退款",
+  cancelled: "已取消",
+};
+
+// ============================================================================
 // 类型定义
 // ============================================================================
 
@@ -59,4 +80,11 @@ export async function getOrganizationOrders(
   return apiGet<Order[]>("/organization-orders", {
     params: { identityId },
   });
+}
+
+/**
+ * 格式化金额（分 -> 元）
+ */
+export function formatAmount(fen: number): string {
+  return `¥${(fen / 100).toFixed(2)}`;
 }
