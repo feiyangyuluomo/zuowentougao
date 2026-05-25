@@ -1,5 +1,48 @@
 # 更新日志
 
+## 2026-05-25 Phase 4B.2 用户资产关联与跨流程状态打通
+
+### 新增文件
+
+| 文件 | 说明 |
+|------|------|
+| `src/app/api/students/route.ts` | GET/POST /api/students |
+| `src/app/api/essays/route.ts` | GET/POST /api/essays |
+| `src/lib/api/student-api.ts` | 学生 API 客户端封装 |
+| `src/lib/api/essay-api.ts` | 作文 API 客户端封装 |
+
+### Repository 增强
+
+| 文件 | 新增方法 |
+|------|----------|
+| `src/server/repositories/student.repository.ts` | `create()` |
+| `src/server/repositories/essay.repository.ts` | `create()` |
+
+### 页面修改
+
+| 页面 | 修改内容 |
+|------|----------|
+| `/agent-submissions/new` | 学生/作文创建改用 API，自动刷新列表 |
+| `/agent-submissions/new` | 支持 URL 参数 `essayId` 自动选中作文 |
+| `/agent-submissions/new` | EssaySelectOrCreate 增加搜索框 |
+| `/ai-assistant` | 保存作文改用 `createEssay()` API |
+| `/essay-revision` | 移除 MOCK_ESSAYS，改用 `getEssays()` API |
+| `/essay-revision` | "查看我的作文"链接改为 `/workspace/essays` |
+
+### AI 助手 → 平台代投参数传递
+
+| 场景 | 传递参数 |
+|------|----------|
+| 有 `savedEssayId` | `activity` + `essayId`（只传 ID） |
+| 无 `essayId` | `activity` + `title` + `content`（fallback） |
+
+### 验证结果
+
+- type-check: 通过
+- build: 通过
+
+---
+
 ## 2026-05-25 Phase 4B.1 API 安全加固 + 页面逐步切 API
 
 ### 新增文件
