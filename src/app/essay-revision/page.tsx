@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuthStore } from "@/stores";
-import { MOCK_ESSAYS } from "@/lib/mock/essays";
+import { getEssays, type EssayInfo } from "@/lib/api/essay-api";
 import {
   calculateRevisionFee,
   calculateTotalFee,
@@ -21,7 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Zap, AlertCircle, CheckCircle2 } from "lucide-react";
+import { FileText, Zap, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import Link from "next/link";
 import {
   ESSAY_REVIEW_PAGE_VIEW,
@@ -44,15 +44,30 @@ export default function EssayRevisionPage() {
   const [essayLevel, setEssayLevel] = useState<EssayLevel>("primary");
   const [rushType, setRushType] = useState<RushType>("none");
   const [sourceType, setSourceType] = useState<"new" | "existing">("new");
+  const [userEssays, setUserEssays] = useState<EssayInfo[]>([]);
+  const [isLoadingEssays, setIsLoadingEssays] = useState(false);
 
-  // 获取用户的作文列表
-  const userEssays = currentIdentity
-    ? MOCK_ESSAYS.filter((e) => e.ownerIdentityId === currentIdentity.id)
-    : [];
+  // 加载用户的作文列表
+  const loadEssays = useCallback(async () => {
+    if (!currentIdentity) return;
+    setIsLoadingEssays(true);
+    try {
+      const essays = await getEssays();
+      setUserEssays(essays);
+    } catch (error) {
+      console.error("加载作文失败:", error);
+    } finally {
+      setIsLoadingEssays(false);
+    }
+  }, [currentIdentity]);
+
+  useEffect(() => {
+    loadEssays();
+  }, [loadEssays]);
 
   // 选中的作文
   const selectedEssay = selectedEssayId
-    ? MOCK_ESSAYS.find((e) => e.id === selectedEssayId)
+    ? userEssays.find((e) => e.id === selectedEssayId)
     : null;
 
   // 当前作文内容
@@ -83,7 +98,6 @@ export default function EssayRevisionPage() {
   // 作文选择埋点
   const handleEssaySelect = (essayId: string) => {
     setSelectedEssayId(essayId);
-    const essay = MOCK_ESSAYS.find((e) => e.id === essayId);
     trackEvent(ESSAY_REVIEW_ENTRY_CLICK, {
       essayId,
       studentId: "",
@@ -190,32 +204,41 @@ export default function EssayRevisionPage() {
               {sourceType === "existing" ? (
                 // 已有作文列表
                 <div className="space-y-2">
-                  <Select value={selectedEssayId || ""} onValueChange={handleEssaySelect}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="请选择作文" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {userEssays.length === 0 ? (
-                        <SelectItem value="none" disabled>
-                          暂无作文，请上传新作文
-                        </SelectItem>
-                      ) : (
-                        userEssays.map((essay) => (
-                          <SelectItem key={essay.id} value={essay.id}>
-                            {essay.title} ({essay.wordCount}字)
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  {selectedEssay && (
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium">{selectedEssay.title}</h4>
-                        <Badge variant="outline">{selectedEssay.wordCount}字</Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 line-clamp-3">{selectedEssay.content}</p>
+                  {isLoadingEssays ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                      <span className="ml-2 text-gray-500">加载中...</span>
                     </div>
+                  ) : (
+                    <>
+                      <Select value={selectedEssayId || ""} onValueChange={handleEssaySelect}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="请选择作文" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {userEssays.length === 0 ? (
+                            <SelectItem value="none" disabled>
+                              暂无作文，请上传新作文
+                            </SelectItem>
+                          ) : (
+                            userEssays.map((essay) => (
+                              <SelectItem key={essay.id} value={essay.id}>
+                                {essay.title} ({essay.wordCount}字)
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      {selectedEssay && (
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-medium">{selectedEssay.title}</h4>
+                            <Badge variant="outline">{selectedEssay.wordCount}字</Badge>
+                          </div>
+                          <p className="text-sm text-gray-600 line-clamp-3">{selectedEssay.content}</p>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               ) : (
@@ -509,7 +532,7 @@ export default function EssayRevisionPage() {
           </Card>
 
           {/* 链接到我的作文 */}
-          <Link href="/essays">
+          <Link href="/workspace/essays">
             <Button variant="outline" className="w-full">
               <FileText className="h-4 w-4 mr-2" />
               查看我的作文

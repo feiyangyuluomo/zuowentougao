@@ -273,6 +273,7 @@ function EssaySelectOrCreate({
     title: "",
     content: "",
   });
+  const [searchKeyword, setSearchKeyword] = useState("");
 
   const selectedEssay = essays.find((e) => e.id === selectedEssayId);
 
@@ -285,6 +286,11 @@ function EssaySelectOrCreate({
     setNewEssay({ title: "", content: "" });
     setIsCreating(false);
   };
+
+  // 按标题搜索作文
+  const filteredEssays = searchKeyword
+    ? essays.filter((e) => e.title.toLowerCase().includes(searchKeyword.toLowerCase()))
+    : essays;
 
   return (
     <div className="space-y-4">
@@ -340,9 +346,28 @@ function EssaySelectOrCreate({
         </Card>
       ) : (
         <>
-          {essays.length > 0 ? (
+          {/* 搜索框 */}
+          {essays.length > 0 && (
+            <div className="relative">
+              <Input
+                placeholder="搜索作文标题..."
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                className="pr-8"
+              />
+              {searchKeyword && (
+                <button
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  onClick={() => setSearchKeyword("")}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          )}
+          {filteredEssays.length > 0 ? (
             <div className="space-y-2">
-              {essays.map((essay) => (
+              {filteredEssays.map((essay) => (
                 <div
                   key={essay.id}
                   className={`p-3 border rounded-lg cursor-pointer transition-colors ${
@@ -356,7 +381,7 @@ function EssaySelectOrCreate({
                     <div>
                       <p className="font-medium">{essay.title}</p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {essay.wordCount}字 | {essay.genre}
+                        {essay.wordCount}字 | {essay.genre || "未分类"}
                       </p>
                     </div>
                     {selectedEssayId === essay.id && (
@@ -365,6 +390,10 @@ function EssaySelectOrCreate({
                   </div>
                 </div>
               ))}
+            </div>
+          ) : essays.length > 0 && filteredEssays.length === 0 ? (
+            <div className="text-center py-4 text-gray-500">
+              <p>未找到匹配的作文</p>
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500 border border-dashed rounded-lg">
@@ -398,6 +427,7 @@ function ApplicationFlow({
   const [students, setStudents] = useState<StudentInfo[]>([]);
   const [essays, setEssays] = useState<EssayInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProcessingUrl, setIsProcessingUrl] = useState(false);
 
   // 加载学生和作文列表
   const loadData = useCallback(async () => {
@@ -421,34 +451,55 @@ function ApplicationFlow({
     loadData();
   }, [loadData]);
 
-  // 如果 URL 中有 essayId，设置选中作文
+  // 处理 URL 参数中的 essayId 或 title/content
   useEffect(() => {
-    if (essayIdFromUrl && essays.length > 0) {
-      setSelectedEssayId(essayIdFromUrl);
-    }
-  }, [essayIdFromUrl, essays]);
+    if (isLoading || isProcessingUrl) return;
 
-  // 如果有预填内容，自动创建作文
-  useEffect(() => {
-    if (prefilledTitle && prefilledContent && currentIdentity && !isLoading) {
-      // 检查是否已有相同标题的作文
-      const existing = essays.find(e => e.title === prefilledTitle && e.content === prefilledContent);
-      if (!existing) {
-        // 使用 API 创建作文
-        createEssay({
-          title: prefilledTitle,
-          content: prefilledContent,
-        }).then((newEssay) => {
-          setEssays([...essays, newEssay]);
-          setSelectedEssayId(newEssay.id);
-        }).catch((err) => {
-          console.error("创建作文失败:", err);
-        });
-      } else {
-        setSelectedEssayId(existing.id);
+    const processUrlParams = async () => {
+      setIsProcessingUrl(true);
+
+      try {
+        // 优先处理 essayId - 从 API 获取作文
+        if (essayIdFromUrl) {
+          const essay = await getEssayById(essayIdFromUrl);
+          if (essay) {
+            setSelectedEssayId(essay.id);
+            // 如果列表中没有这个作文，添加进去
+            if (!essays.find((e) => e.id === essay.id)) {
+              setEssays((prev) => [...prev, essay]);
+            }
+            setIsProcessingUrl(false);
+            return;
+          }
+        }
+
+        // 如果没有 essayId 但有 title/content，创建作文
+        if (prefilledTitle && prefilledContent && currentIdentity) {
+          // 检查是否已有相同标题和内容的作文
+          const existing = essays.find(
+            (e) => e.title === prefilledTitle && e.content === prefilledContent
+          );
+          if (existing) {
+            setSelectedEssayId(existing.id);
+          } else {
+            // 创建新作文
+            const newEssay = await createEssay({
+              title: prefilledTitle,
+              content: prefilledContent,
+            });
+            setEssays((prev) => [...prev, newEssay]);
+            setSelectedEssayId(newEssay.id);
+          }
+        }
+      } catch (error) {
+        console.error("处理 URL 参数失败:", error);
+      } finally {
+        setIsProcessingUrl(false);
       }
-    }
-  }, [prefilledTitle, prefilledContent, currentIdentity, isLoading]);
+    };
+
+    processUrlParams();
+  }, [isLoading, essayIdFromUrl, prefilledTitle, prefilledContent, currentIdentity]);
 
   // 获取当前身份下的学生
   const ownerStudents = students.filter((s) => s.ownerIdentityId === currentIdentity?.id);
