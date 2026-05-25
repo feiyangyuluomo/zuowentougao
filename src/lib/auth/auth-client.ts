@@ -1,26 +1,35 @@
 // ============================================================================
 // Auth Client Service
-// 客户端安全的数据访问层 - 封装 auth 相关的 mock/repository 调用
+// 客户端安全的 auth 封装层
+//
 // 此文件可以在客户端直接 import
+//
+// 重要：真实 db 登录必须通过 /api/auth/* route 调用 server service，
+// 不能从 client 直接 import server 层代码（如 @/server/* 或 prisma）。
 // ============================================================================
 
 import type { User, UserIdentity, Entitlement, Membership } from "@/types";
 
-// 直接从 mock 导入（client-safe）
-import { getMockAccountByPhone, getMockIdentitiesByPhone, getMockIdentityById } from "@/lib/mock/accounts";
+// ============================================================================
+// Mock 数据导入（client-safe，因为只是静态数据）
+// ============================================================================
+
+import { getMockAccountByPhone, getMockIdentitiesByPhone } from "@/lib/mock/accounts";
 import { getEntitlementsByIdentityId, getMembershipByIdentityId, isNoEntitlementIdentity } from "@/lib/mock/entitlements";
 
-// Repository 导入（client-safe，因为 repository 内部处理 mock/db 切换）
-import { userRepository } from "@/server/repositories/user.repository";
-import { identityRepository } from "@/server/repositories/identity.repository";
-import { entitlementRepository } from "@/server/repositories/entitlement.repository";
-import { membershipRepository } from "@/server/repositories/membership.repository";
+// ============================================================================
+// 常量
+// ============================================================================
 
 // 游客权益（无权益）
 const EMPTY_ENTITLEMENTS: Entitlement[] = [];
 
 // 运营人员和管理员没有权益
 const NO_ENTITLEMENT_TYPES = ["operator", "admin"];
+
+// ============================================================================
+// 内部辅助函数
+// ============================================================================
 
 /**
  * 判断身份是否无权益
@@ -30,105 +39,9 @@ function checkIsNoEntitlementIdentity(identityType: string): boolean {
 }
 
 /**
- * 根据手机号登录
- * 内部调用 repository 获取用户和身份信息
- */
-export async function loginByPhone(phone: string): Promise<{
-  user: User | null;
-  identities: UserIdentity[];
-}> {
-  // 获取用户信息
-  const user = await userRepository.findByPhone(phone);
-
-  if (!user) {
-    return { user: null, identities: [] };
-  }
-
-  // 获取身份列表
-  const identities = await identityRepository.findByUserId(user.id);
-
-  return { user, identities };
-}
-
-/**
- * 获取用户完整上下文（用户 + 身份 + 权益 + 会员）
- */
-export async function getUserWithIdentities(phone: string): Promise<{
-  user: User | null;
-  identities: UserIdentity[];
-  entitlements: Entitlement[];
-  membership: Membership | null;
-  currentIdentity: UserIdentity | null;
-}> {
-  const { user, identities } = await loginByPhone(phone);
-
-  if (!user || identities.length === 0) {
-    return { user: null, identities: [], entitlements: [], membership: null, currentIdentity: null };
-  }
-
-  // 获取第一个身份的权益和会员
-  const currentIdentity = identities[0];
-  const entitlements = await getIdentityEntitlements(currentIdentity);
-  const membership = await getIdentityMembership(currentIdentity);
-
-  return { user, identities, entitlements, membership, currentIdentity };
-}
-
-/**
- * 获取身份上下文
- */
-export async function getIdentityContext(identityId: string): Promise<{
-  identity: UserIdentity | null;
-  entitlements: Entitlement[];
-  membership: Membership | null;
-}> {
-  const identity = await identityRepository.findById(identityId);
-
-  if (!identity) {
-    return { identity: null, entitlements: [], membership: null };
-  }
-
-  const entitlements = await getIdentityEntitlements(identity);
-  const membership = await getIdentityMembership(identity);
-
-  return { identity, entitlements, membership };
-}
-
-/**
- * 切换身份上下文
- */
-export async function switchIdentityContext(identityId: string): Promise<{
-  identity: UserIdentity | null;
-  entitlements: Entitlement[];
-  membership: Membership | null;
-}> {
-  return getIdentityContext(identityId);
-}
-
-/**
- * 获取身份的权益
- */
-export async function getIdentityEntitlements(identity: UserIdentity): Promise<Entitlement[]> {
-  if (checkIsNoEntitlementIdentity(identity.identityType)) {
-    return EMPTY_ENTITLEMENTS;
-  }
-  return entitlementRepository.findByIdentityId(identity.id);
-}
-
-/**
- * 获取身份的会员信息
- */
-export async function getIdentityMembership(identity: UserIdentity): Promise<Membership | null> {
-  if (checkIsNoEntitlementIdentity(identity.identityType)) {
-    return null;
-  }
-  return membershipRepository.findByIdentityId(identity.id);
-}
-
-/**
  * 创建默认身份（当用户无身份时）
  */
-export function createDefaultIdentity(userId: string, phone: string): UserIdentity {
+function createDefaultIdentity(userId: string, phone: string): UserIdentity {
   const isOperator = phone === "13800138002";
   const isTeacher = phone === "13800138003";
   const isOrgAdmin = phone === "13800138004";
@@ -160,9 +73,10 @@ export function createDefaultIdentity(userId: string, phone: string): UserIdenti
 // ============================================================================
 
 /**
-
  * Mock 快速登录 - 直接从 mock 获取用户和身份
  * 用于 USE_MOCK=true 时的快速登录
+ *
+ * 注意：真实登录必须通过 /api/auth/* route 调用 server service
  */
 export async function mockLoginByPhone(phone: string): Promise<{
   user: User;
@@ -235,4 +149,61 @@ export function mockSwitchIdentity(
     : getMembershipByIdentityId(newIdentity.id);
 
   return { identity: newIdentity, entitlements, membership };
+}
+
+// ============================================================================
+// 预留接口（未来通过 API route 调用 server service）
+// ============================================================================
+
+/**
+ * 根据手机号登录（未来通过 API 调用）
+ * TODO: 接入真实登录后，通过 /api/auth/login 调用 server service
+ */
+export async function loginByPhone(phone: string): Promise<{
+  user: User | null;
+  identities: UserIdentity[];
+}> {
+  // 临时实现，后续通过 API route 调用
+  const account = getMockAccountByPhone(phone);
+  if (!account) {
+    return { user: null, identities: [] };
+  }
+  const identities = getMockIdentitiesByPhone(phone);
+  return {
+    user: {
+      id: account.userId,
+      nickname: account.nickname,
+      phone: account.phone,
+      avatar: undefined,
+      status: "active",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    identities,
+  };
+}
+
+/**
+ * 获取用户完整上下文（未来通过 API 调用）
+ * TODO: 接入真实登录后，通过 /api/auth/profile 调用 server service
+ */
+export async function getUserWithIdentities(phone: string): Promise<{
+  user: User | null;
+  identities: UserIdentity[];
+  entitlements: Entitlement[];
+  membership: Membership | null;
+  currentIdentity: UserIdentity | null;
+}> {
+  const { user, identities } = await loginByPhone(phone);
+  if (!user || identities.length === 0) {
+    return { user: null, identities: [], entitlements: [], membership: null, currentIdentity: null };
+  }
+  const currentIdentity = identities[0];
+  const entitlements = checkIsNoEntitlementIdentity(currentIdentity.identityType)
+    ? EMPTY_ENTITLEMENTS
+    : getEntitlementsByIdentityId(currentIdentity.id);
+  const membership = checkIsNoEntitlementIdentity(currentIdentity.identityType)
+    ? null
+    : getMembershipByIdentityId(currentIdentity.id);
+  return { user, identities, entitlements, membership, currentIdentity };
 }
