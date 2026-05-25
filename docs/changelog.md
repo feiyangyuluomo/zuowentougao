@@ -1,5 +1,70 @@
 # 更新日志
 
+## 2026-05-25 Phase 4A.2 数据库种子数据 + Smoke Test
+
+### 新增文件
+
+| 文件 | 说明 |
+|------|------|
+| `prisma/seed.ts` | 数据库种子数据脚本 |
+| `src/server/dev-test/db-smoke-test.ts` | 数据库 smoke test 脚本 |
+
+### 新增脚本
+
+```bash
+npm run db:seed       # 填充种子数据
+npm run db:smoke-test # 运行数据库 smoke test
+```
+
+### Seed 覆盖数据
+
+| 数据类型 | 数量 | 说明 |
+|----------|------|------|
+| users | 5 | 13800138001-05 |
+| organizations | 1 | org-001 |
+| user_identities | 5 | parent/operator/teacher/org_admin/org_teacher |
+| classes | 2 | 老师班级 + 机构班级 |
+| students | 3 | 家长/老师/机构学生各1 |
+| publishers | 2 | 杂志 + 组委会 |
+| activities | 3 | 夏季刊/作文大赛/长期征稿 |
+| essays | 3 | 每学生1篇 |
+| essay_versions | 3 | 每作文1个版本 |
+| entitlements | 16 | 每身份4条 |
+| memberships | 4 | 除operator外 |
+| orders | 5 | 家长3条 + 老师2条 |
+| self_submissions | 2 | 家长1 + 老师1 |
+| agent_submission_tasks | 1 | 家长1 |
+
+### Smoke Test 检查项
+
+7 个 repository 方法：
+1. `userRepository.findByPhone()`
+2. `identityRepository.findByUserId()`
+3. `studentRepository.findByOwner()`
+4. `activityRepository.findAll()`
+5. `orderRepository.findByIdentity()`
+6. `entitlementRepository.findByIdentityId()`
+7. `membershipRepository.findByIdentityId()`
+
+### 运行方法
+
+```bash
+# 1. 设置环境变量 .env
+DATABASE_URL=postgresql://...
+USE_MOCK=false
+
+# 2. 同步 schema 到数据库
+npm run db:push
+
+# 3. 填充种子数据
+npm run db:seed
+
+# 4. 运行 smoke test
+npm run db:smoke-test
+```
+
+---
+
 ## 2026-05-24 Phase 4A 基础设施加固
 
 ### 功能改进
