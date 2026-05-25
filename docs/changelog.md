@@ -1,5 +1,60 @@
 # 更新日志
 
+## 2026-05-25 Phase 4B API Route 最小后端接口
+
+### 新增文件
+
+| 文件 | 说明 |
+|------|------|
+| `src/server/api/response.ts` | 统一响应格式 |
+| `src/lib/api/client.ts` | 客户端 API 封装 |
+| `src/lib/api/auth-api.ts` | 认证 API 封装 |
+| `src/lib/api/activity-api.ts` | 活动 API 封装 |
+| `src/lib/api/order-api.ts` | 订单 API 封装 |
+| `src/app/api/auth/login/route.ts` | POST /api/auth/login |
+| `src/app/api/auth/identity/switch/route.ts` | POST /api/auth/identity/switch |
+| `src/app/api/activities/route.ts` | GET /api/activities |
+| `src/app/api/activities/[id]/route.ts` | GET /api/activities/[id] |
+| `src/app/api/orders/route.ts` | GET /api/orders |
+| `src/app/api/organization-orders/route.ts` | GET /api/organization-orders |
+| `src/server/dev-test/api-smoke-test.ts` | API smoke test 脚本 |
+
+### 新增脚本
+
+```bash
+npm run api:smoke-test  # 运行 API smoke test
+```
+
+### API Route 清单
+
+| 路由 | 方法 | 调用 service | 说明 |
+|------|------|-------------|------|
+| `/api/auth/login` | POST | `auth.service.getUserWithIdentities` | 手机号 mock 登录 |
+| `/api/auth/identity/switch` | POST | `auth.service.switchIdentityContext` | 切换身份上下文 |
+| `/api/activities` | GET | `activity.service.filterActivities` | 筛选活动列表 |
+| `/api/activities/[id]` | GET | `activity.service.getActivityById` | 活动详情 |
+| `/api/orders` | GET | `order.service.getPersonalOrders` | 个人订单 |
+| `/api/organization-orders` | GET | `order.service.getOrgOrders` | 机构订单 |
+
+### 页面切换
+
+- `/activities` - 页面改用 `activity-api.ts` → `/api/activities`
+
+### 安全说明
+
+> **当前 auth API 是 mock/test login，不适合生产**
+> - 不做验证码/密码/微信登录
+> - 不做 session/JWT/cookie 校验
+> - 真实上线前必须加入身份校验和权限校验
+
+### 验证结果
+
+- type-check: 通过
+- prisma generate: 通过
+- build: 通过 (32 个页面 + 6 个 API route)
+
+---
+
 ## 2026-05-25 Phase 4A.4 Auth 数据源切换验证
 
 ### 新增文件

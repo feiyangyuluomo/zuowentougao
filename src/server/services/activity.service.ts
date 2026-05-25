@@ -39,6 +39,16 @@ export async function filterActivities(filters: {
 /**
  * 获取单个活动详情
  */
-export async function getActivityById(id: string) {
+async function getActivityById(id: string) {
   return activityRepository.findById(id);
 }
+
+// ============================================================================
+// Service Export
+// ============================================================================
+
+export const activityService = {
+  getActivityList,
+  filterActivities,
+  getActivityById,
+};

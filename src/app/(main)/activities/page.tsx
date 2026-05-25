@@ -5,7 +5,7 @@ import { useAuthStore } from "@/stores";
 import { ActivityCard } from "@/components/activities/ActivityCard";
 import { ActivityFilter } from "@/components/activities/ActivityFilter";
 import { EmptyState } from "@/components/common";
-import { filterActivities } from "@/server/services/activity.service";
+import { getActivities } from "@/lib/api/activity-api";
 import { ACTIVITY_LIST_VIEW, trackEvent } from "@/lib/analytics";
 
 export default function ActivitiesPage() {
@@ -30,21 +30,13 @@ export default function ActivitiesPage() {
     async function loadActivities() {
       setLoading(true);
       try {
-        // 转换 filter 参数格式
-        const filterParams: {
-          gradeScope?: string[];
-          genre?: string[];
-          keyword?: string;
-          hasPayment?: boolean;
-          hasCertificate?: boolean;
-        } = {};
-        if (filters.gradeScope) filterParams.gradeScope = filters.gradeScope;
-        if (filters.genre) filterParams.genre = filters.genre;
-        if (filters.keyword) filterParams.keyword = filters.keyword;
-        if (filters.hasPayment !== undefined) filterParams.hasPayment = filters.hasPayment;
-        if (filters.hasCertificate !== undefined) filterParams.hasCertificate = filters.hasCertificate;
-
-        const data = await filterActivities(filterParams);
+        const data = await getActivities({
+          keyword: filters.keyword,
+          gradeScope: filters.gradeScope,
+          genre: filters.genre,
+          hasPayment: filters.hasPayment,
+          hasCertificate: filters.hasCertificate,
+        });
         setActivities(data);
       } catch (error) {
         console.error("加载活动失败:", error);

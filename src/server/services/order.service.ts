@@ -5,7 +5,6 @@
 
 import { PaymentStatus } from "@prisma/client";
 import { orderRepository } from "@/server/repositories";
-import type { UserIdentity } from "@/types";
 
 // 本地类型定义
 interface Order {
@@ -45,8 +44,8 @@ export const PAYMENT_STATUS_LABELS: Record<string, string> = {
  * 获取个人订单列表（按 identityId）
  * 只返回个人订单（无 organizationId）
  */
-export async function getPersonalOrders(identity: UserIdentity): Promise<Order[]> {
-  const orders = await orderRepository.findByIdentity(identity.id);
+async function getPersonalOrdersByIdentityId(identityId: string): Promise<Order[]> {
+  const orders = await orderRepository.findByIdentity(identityId);
   // 过滤掉机构订单，只返回个人订单
   const personalOrders = (orders as unknown as Order[]).filter((o) => !o.organizationId);
   return personalOrders;
@@ -55,7 +54,7 @@ export async function getPersonalOrders(identity: UserIdentity): Promise<Order[]
 /**
  * 获取机构订单列表（按 organizationId）
  */
-export async function getOrgOrders(organizationId: string): Promise<Order[]> {
+async function getOrgOrdersByOrganizationId(organizationId: string): Promise<Order[]> {
   const orders = await orderRepository.findByOrganization(organizationId);
   return orders as unknown as Order[];
 }
@@ -63,7 +62,7 @@ export async function getOrgOrders(organizationId: string): Promise<Order[]> {
 /**
  * 获取订单统计摘要
  */
-export function getOrderSummary(orders: Order[]): {
+function getOrderSummary(orders: Order[]): {
   totalCount: number;
   totalAmount: number;
   byStatus: Record<string, number>;
@@ -85,13 +84,25 @@ export function getOrderSummary(orders: Order[]): {
 /**
  * 计算订单总金额
  */
-export function calculateOrderTotal(orders: Order[]): number {
+function calculateOrderTotal(orders: Order[]): number {
   return orders.reduce((sum, order) => sum + order.amount, 0);
 }
 
 /**
  * 格式化金额（分 -> 元）
  */
-export function formatAmount(fen: number): string {
+function formatAmount(fen: number): string {
   return `¥${(fen / 100).toFixed(2)}`;
 }
+
+// ============================================================================
+// Service Export
+// ============================================================================
+
+export const orderService = {
+  getPersonalOrders: getPersonalOrdersByIdentityId,
+  getOrgOrders: getOrgOrdersByOrganizationId,
+  getOrderSummary,
+  calculateOrderTotal,
+  formatAmount,
+};

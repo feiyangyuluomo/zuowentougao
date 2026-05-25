@@ -17,6 +17,7 @@
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
     "db:smoke-test": "tsx src/server/dev-test/db-smoke-test.ts",
+    "api:smoke-test": "tsx src/server/dev-test/api-smoke-test.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {

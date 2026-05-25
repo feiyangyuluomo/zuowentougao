@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores";
-import { getPersonalOrders, formatAmount, ORDER_TYPE_LABELS, PAYMENT_STATUS_LABELS } from "@/server/services/order.service";
-import type { UserIdentity } from "@/types";
+import { orderService, ORDER_TYPE_LABELS, PAYMENT_STATUS_LABELS } from "@/server/services/order.service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, User, FileText, Receipt } from "lucide-react";
@@ -84,7 +83,7 @@ function OrderCard({ order }: { order: Order }) {
         )}
         <div className="pt-2 border-t mt-3">
           <span className="text-lg font-semibold text-primary">
-            {formatAmount(order.amount)}
+            {orderService.formatAmount(order.amount)}
           </span>
         </div>
       </CardContent>
@@ -119,10 +118,14 @@ export default function OrdersPage() {
 
   // 加载订单数据
   useEffect(() => {
+    if (!currentIdentity) return;
+
+    const identityId = currentIdentity.id;
+
     async function loadOrders() {
       setLoading(true);
       try {
-        const data = await getPersonalOrders(currentIdentity as UserIdentity);
+        const data = await orderService.getPersonalOrders(identityId);
         setOrders(data);
       } catch (error) {
         console.error("加载订单失败:", error);
@@ -135,7 +138,7 @@ export default function OrdersPage() {
     // 页面浏览埋点
     trackEvent(ORDER_PAGE_VIEW, {
       orderPageType: "personal",
-      identityType: currentIdentity?.identityType,
+      identityType: currentIdentity.identityType,
     });
   }, []);
 
@@ -177,7 +180,7 @@ export default function OrdersPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <span className="text-2xl font-semibold text-primary">
-                {formatAmount(totalAmount)}
+                {orderService.formatAmount(totalAmount)}
               </span>
             </div>
           </CardContent>

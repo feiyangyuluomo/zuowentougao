@@ -26,7 +26,7 @@ function isNoEntitlementIdentity(identityType: string): boolean {
  * 根据手机号登录
  * TODO: 未来接入真实登录（密码/验证码/微信）
  */
-export async function loginByPhone(phone: string): Promise<{
+async function loginByPhone(phone: string): Promise<{
   user: User | null;
   identities: UserIdentity[];
 }> {
@@ -42,7 +42,7 @@ export async function loginByPhone(phone: string): Promise<{
 /**
  * 获取用户完整上下文
  */
-export async function getUserWithIdentities(phone: string): Promise<{
+async function getUserWithIdentities(phone: string): Promise<{
   user: User | null;
   identities: UserIdentity[];
   entitlements: Entitlement[];
@@ -65,7 +65,7 @@ export async function getUserWithIdentities(phone: string): Promise<{
 /**
  * 获取身份上下文
  */
-export async function getIdentityContext(identityId: string): Promise<{
+async function getIdentityContext(identityId: string): Promise<{
   identity: UserIdentity | null;
   entitlements: Entitlement[];
   membership: Membership | null;
@@ -84,7 +84,7 @@ export async function getIdentityContext(identityId: string): Promise<{
 /**
  * 切换身份上下文
  */
-export async function switchIdentityContext(identityId: string): Promise<{
+async function switchIdentityContext(identityId: string): Promise<{
   identity: UserIdentity | null;
   entitlements: Entitlement[];
   membership: Membership | null;
@@ -111,3 +111,14 @@ async function getIdentityMembership(identity: UserIdentity): Promise<Membership
   }
   return membershipRepository.findByIdentityId(identity.id);
 }
+
+// ============================================================================
+// Service Export
+// ============================================================================
+
+export const authService = {
+  loginByPhone,
+  getUserWithIdentities,
+  getIdentityContext,
+  switchIdentityContext,
+};
