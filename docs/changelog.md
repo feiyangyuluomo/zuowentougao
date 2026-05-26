@@ -1,5 +1,37 @@
 # 更新日志
 
+## 2026-05-26 Phase 4B.3 首页视觉设计升级
+
+### 页面修改
+
+| 页面 | 修改内容 |
+|------|----------|
+| `/` | 视觉设计升级，改用玻璃态导航、宾果卡片布局、渐变装饰效果 |
+| `/` | 新增浮动 AI 投稿助手按钮 |
+
+### 设计规范更新
+
+| 元素 | 实现 |
+|------|------|
+| 玻璃态导航 | `glass-nav` class + `backdrop-blur-md` |
+| 宾果卡片 | `bento-card` class + hover 动效 |
+| 渐变文字 | `text-gradient` class |
+| 表面色系 | `--surface*` CSS 变量 |
+| 字体 | Plus Jakarta Sans 作为 Headline 字体 |
+
+### 技术细节
+
+- 使用 Material Symbols 图标字体
+- 替换不可用的 Lucide 图标（AutoAwesome→Sparkles, Handyman→Wrench, EmojiEvents→Trophy, Dashboard→LayoutDashboard）
+- 保留 shadcn/ui 组件 + Tailwind 样式体系
+
+### 验证结果
+
+- type-check: 通过
+- build: 通过
+
+---
+
 ## 2026-05-25 Phase 4B.2 用户资产关联与跨流程状态打通
 
 ### 新增文件
